@@ -153,32 +153,34 @@ SONAR-INTEL enforces strict domain integrity standards across both backend and f
 
 ```mermaid
 flowchart TD
-    subgraph INGESTION ["1. Ingestion & Quality"]
-        A[Raw SSS Waterfall PNG/TIFF] --> B[Bit-Depth & Format Validation]
-        B --> C[Quality SNR & Dynamic Range Check]
-        C --> D[1-99% Swath Percentile Stretch]
+    subgraph INGESTION["1. Ingestion & Quality"]
+        A["Raw SSS Waterfall PNG / TIFF"] --> B["Bit-Depth & Format Validation"]
+        B --> C["Quality SNR & Dynamic Range Check"]
+        C --> D["1–99% Swath Percentile Stretch"]
     end
 
-    subgraph DETECTION ["2. Deep Learning Pipeline"]
-        D --> E[640x640 Deterministic Tiling\n20% Stride Overlap]
-        E --> F[Batched YOLOv8n CUDA FP16\nyolov8n-sonar-baseline]
-        F --> G[Non-Maximum Suppression\nSliver & Containment Filter]
-        G --> H[Acoustic Rank Scoring\nShadow + Context + Conf]
+    subgraph DETECTION["2. Deep Learning Pipeline"]
+        D --> E["640x640 Deterministic Tiling<br/>20% Stride Overlap"]
+        E --> F["Batched YOLOv8n CUDA FP16<br/>yolov8n-sonar-baseline"]
+        F --> G["Non-Maximum Suppression<br/>Sliver & Containment Filter"]
+        G --> H["Acoustic Rank Scoring<br/>Shadow + Context + Conf"]
     end
 
-    subgraph TRIAGE ["3. Human-in-the-Loop Operations"]
-        H --> I[Acoustic Candidate Proposal\nC001, C002, ...]
-        I --> J{Hydrographic Operator Review}
-        J -->|Valid Anomaly| K[CONFIRMED CONTACT]
-        J -->|Natural Clutter| L[FALSE POSITIVE]
-        J -->|Uncertain| M[NEEDS REVIEW]
+    subgraph TRIAGE["3. Human-in-the-Loop Operations"]
+        H --> I["Acoustic Candidate Proposals<br/>C001, C002, ..."]
+        I --> J{"Hydrographic Operator Review"}
+        J -->|"Valid Anomaly"| K["CONFIRMED CONTACT"]
+        J -->|"Natural Clutter"| L["FALSE POSITIVE"]
+        J -->|"Uncertain Return"| M["NEEDS REVIEW"]
     end
 
-    subgraph PERSISTENCE ["4. Spatial GIS & Export"]
-        K & L & M --> N[(SQLite / PostGIS Persistence)]
-        N --> O[RFC 7946 GeoJSON Layer]
-        N --> P[Tabular Detections CSV]
-        N --> Q[Executive Survey Report]
+    subgraph PERSISTENCE["4. Spatial GIS & Export"]
+        K --> N[("SQLite / PostGIS Database")]
+        L --> N
+        M --> N
+        N --> O["RFC 7946 GeoJSON Layer"]
+        N --> P["Tabular Detections CSV"]
+        N --> Q["Executive Survey Report"]
     end
 ```
 
