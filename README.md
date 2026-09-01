@@ -151,38 +151,7 @@ SONAR-INTEL enforces strict domain integrity standards across both backend and f
 
 ## 🏗️ End-to-End System Architecture
 
-```mermaid
-flowchart TD
-    subgraph INGESTION["1. Ingestion & Quality"]
-        A["Raw SSS Waterfall PNG / TIFF"] --> B["Bit-Depth & Format Validation"]
-        B --> C["Quality SNR & Dynamic Range Check"]
-        C --> D["1–99% Swath Percentile Stretch"]
-    end
-
-    subgraph DETECTION["2. Deep Learning Pipeline"]
-        D --> E["640x640 Deterministic Tiling<br/>20% Stride Overlap"]
-        E --> F["Batched YOLOv8n CUDA FP16<br/>yolov8n-sonar-baseline"]
-        F --> G["Non-Maximum Suppression<br/>Sliver & Containment Filter"]
-        G --> H["Acoustic Rank Scoring<br/>Shadow + Context + Conf"]
-    end
-
-    subgraph TRIAGE["3. Human-in-the-Loop Operations"]
-        H --> I["Acoustic Candidate Proposals<br/>C001, C002, ..."]
-        I --> J{"Hydrographic Operator Review"}
-        J -->|"Valid Anomaly"| K["CONFIRMED CONTACT"]
-        J -->|"Natural Clutter"| L["FALSE POSITIVE"]
-        J -->|"Uncertain Return"| M["NEEDS REVIEW"]
-    end
-
-    subgraph PERSISTENCE["4. Spatial GIS & Export"]
-        K --> N[("SQLite / PostGIS Database")]
-        L --> N
-        M --> N
-        N --> O["RFC 7946 GeoJSON Layer"]
-        N --> P["Tabular Detections CSV"]
-        N --> Q["Executive Survey Report"]
-    end
-```
+![End-to-End System Architecture](docs/screenshots/08_system_architecture_diagram.png)
 
 ---
 
