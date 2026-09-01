@@ -1,13 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MainLayout } from '../components/layout/MainLayout';
+import { ActiveScreen } from '../components/layout/Sidebar';
 import { SurveyUpload } from '../components/upload/SurveyUpload';
-import { SonarViewer } from '../components/sonar/SonarViewer';
-import { MapView } from '../components/map/MapView';
-import { DetectionCard } from '../components/detection/DetectionCard';
-import { ReviewQueue } from '../components/review/ReviewQueue';
 import { useSurvey } from '../hooks/useSurvey';
+import { Contact } from '../types/detection';
+
+// The 6 Authoritative Application Pages
+import { DashboardPage } from './DashboardPage';
+import { SonarAnalysisPage } from './SonarAnalysisPage';
+import { ContactVerificationPage } from './ContactVerificationPage';
+import { GisMappingPage } from './GisMappingPage';
+import { AiPipelinePage } from './AiPipelinePage';
+import { ReportsPage } from './ReportsPage';
 
 export const Dashboard: React.FC = () => {
+  const [activeScreen, setActiveScreen] = useState<ActiveScreen>('dashboard');
+  const [showUploadModal, setShowUploadModal] = useState<boolean>(false);
 
   const {
     survey,
@@ -22,11 +30,16 @@ export const Dashboard: React.FC = () => {
     loadSurvey,
     runAnalysis,
     submitReview,
-    loadDemoSurvey,
+    loadCuratedSample,
     setError
   } = useSurvey();
 
-  const [showUploadModal, setShowUploadModal] = useState<boolean>(false);
+  // On first load, automatically ingest the primary held-out benchmark true-positive (Viator-04)
+  useEffect(() => {
+    if (!survey && !loading) {
+      loadCuratedSample('viator_04');
+    }
+  }, []);
 
   const handleExportGeoJSON = () => {
     if (!survey) return;
@@ -38,85 +51,119 @@ export const Dashboard: React.FC = () => {
     window.open(`/api/surveys/${survey.survey_id}/csv`, '_blank');
   };
 
+  const handleVerifyContact = (contact: Contact) => {
+    setSelectedContact(contact);
+    setActiveScreen('contact-verification');
+  };
+
   return (
     <MainLayout
+      activeScreen={activeScreen}
+      onSelectScreen={setActiveScreen}
       survey={survey}
       summary={summary}
       contacts={contacts}
+      selectedContact={selectedContact}
       analyzing={analyzing}
-      onLoadDemo={loadDemoSurvey}
-      onRunAnalysis={() => runAnalysis(0.25)}
-      onExportGeoJSON={handleExportGeoJSON}
-      onExportCSV={handleExportCSV}
+      onLoadDemoSample={loadCuratedSample}
+      onCustomUploadClick={() => setShowUploadModal(true)}
+      onRunAnalysis={() => runAnalysis(0.20)}
+      onSelectContact={setSelectedContact}
     >
-      {/* Top Banner Alert (if error) */}
+      {/* System alert banner */}
       {error && (
-        <div className="bg-red-950/80 border-b border-red-800 text-red-200 px-4 py-2 text-xs flex items-center justify-between font-mono z-30">
-          <span>[SYSTEM ALERT] {error}</span>
-          <button onClick={() => setError(null)} className="underline ml-4 text-[11px]">Dismiss</button>
+        <div className="bg-red-50 border-b border-red-200 text-red-800 px-4 py-2 text-xs flex items-center justify-between z-30 font-sans">
+          <span className="font-medium">[System Notice] {error}</span>
+          <button onClick={() => setError(null)} className="underline ml-4 text-[11px] text-red-600 hover:text-red-900">Dismiss</button>
         </div>
       )}
 
-      {/* Main Content Workspace */}
-      {!survey ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-          <div className="max-w-md space-y-4 mb-6">
-            <h2 className="text-xl font-bold font-mono text-cyan-300">AWAITING SURVEY SWATH</h2>
-            <p className="text-xs text-slate-400 leading-relaxed font-sans">
-              Load an acoustic side-scan sonar waterfall and optional navigation sensor data to initiate candidate detection, acoustic-context scoring, and geospatial triage.
-            </p>
-          </div>
-          <SurveyUpload
-            onUploadSuccess={(newSurvey) => {
-              loadSurvey(newSurvey);
-              setShowUploadModal(false);
-            }}
-          />
-        </div>
-      ) : (
-        <div className="flex-1 flex flex-col h-full overflow-hidden">
-          {/* Main Dual-View: Sonar Waterfall (Left) & Map View (Right) */}
-          <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-0">
-            {/* Sonar Swath Waterfall Viewer (7 cols) */}
-            <div className="lg:col-span-7 h-full flex flex-col min-h-0">
-              <SonarViewer
-                survey={survey}
-                contacts={contacts}
-                selectedContact={selectedContact}
-                onSelectContact={setSelectedContact}
-              />
+      {/* Screen 1: Dashboard Overview */}
+      {activeScreen === 'dashboard' && (
+        <DashboardPage
+          survey={survey}
+          contacts={contacts}
+          onSelectScreen={setActiveScreen}
+          onSelectContact={(c) => {
+            setSelectedContact(c);
+            setActiveScreen('sonar-analysis');
+          }}
+        />
+      )}
+
+      {/* Screen 2: Sonar Analysis Workspace */}
+      {activeScreen === 'sonar-analysis' && (
+        <SonarAnalysisPage
+          survey={survey}
+          contacts={contacts}
+          selectedContact={selectedContact}
+          analyzing={analyzing}
+          onSelectContact={setSelectedContact}
+          onRunAnalysis={() => runAnalysis(0.20)}
+          onVerifyContact={handleVerifyContact}
+        />
+      )}
+
+      {/* Screen 3: Contact Verification Workflow */}
+      {activeScreen === 'contact-verification' && (
+        <ContactVerificationPage
+          survey={survey}
+          contacts={contacts}
+          selectedContact={selectedContact}
+          onSelectContact={setSelectedContact}
+          onSubmitReview={submitReview}
+          onNavigateToMap={() => setActiveScreen('gis-mapping')}
+        />
+      )}
+
+      {/* Screen 4: GIS Mapping & Cleanup Planning */}
+      {activeScreen === 'gis-mapping' && (
+        <GisMappingPage
+          survey={survey}
+          contacts={contacts}
+          selectedContact={selectedContact}
+          navTrack={navTrack}
+          onSelectContact={setSelectedContact}
+          onNavigateToAnalysis={() => setActiveScreen('sonar-analysis')}
+          onNavigateToVerify={() => setActiveScreen('contact-verification')}
+          onExportGeoJSON={handleExportGeoJSON}
+        />
+      )}
+
+      {/* Screen 5: AI Deep Learning Pipeline Monitor */}
+      {activeScreen === 'ai-pipeline' && (
+        <AiPipelinePage />
+      )}
+
+      {/* Screen 6: Reports & Export Central */}
+      {activeScreen === 'reports' && (
+        <ReportsPage
+          survey={survey}
+          contacts={contacts}
+        />
+      )}
+
+      {/* Modal: Custom Sonar Upload */}
+      {showUploadModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-lg max-w-xl w-full p-6 space-y-4 shadow-xl text-xs font-sans text-slate-900">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+              <span className="font-bold text-slate-900 uppercase">UPLOAD CUSTOM SSS SWATH</span>
+              <button 
+                onClick={() => setShowUploadModal(false)}
+                className="text-slate-400 hover:text-slate-700 text-lg leading-none"
+              >
+                &times;
+              </button>
             </div>
-
-            {/* Map View & Selected Contact Panel (5 cols) */}
-            <div className="lg:col-span-5 h-full flex flex-col min-h-0 border-l border-[#1a2f4c]">
-              {/* Geospatial Map Section */}
-              <div className="h-[48%] min-h-[220px] relative border-b border-[#1a2f4c]">
-                <MapView
-                  contacts={contacts}
-                  selectedContact={selectedContact}
-                  navTrack={navTrack}
-                  onSelectContact={setSelectedContact}
-                />
-              </div>
-
-              {/* Selected Contact Triage & Evidence Panel */}
-              <div className="flex-1 min-h-0 overflow-y-auto">
-                <DetectionCard
-                  contact={selectedContact}
-                  onSubmitReview={submitReview}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Contact Queue */}
-          {contacts.length > 0 && (
-            <ReviewQueue
-              contacts={contacts}
-              selectedContact={selectedContact}
-              onSelectContact={setSelectedContact}
+            <SurveyUpload
+              onUploadSuccess={(newSurvey) => {
+                loadSurvey(newSurvey);
+                setShowUploadModal(false);
+                setActiveScreen('sonar-analysis');
+              }}
             />
-          )}
+          </div>
         </div>
       )}
     </MainLayout>

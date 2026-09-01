@@ -48,7 +48,7 @@ class Contact(BaseModel):
         description="Human-in-the-loop triage decision"
     )
     review_note: Optional[str] = Field(default=None, description="Human reviewer notes")
-    model_version: str = Field(default="yolov8n-v1", description="Model version provenance")
+    model_version: str = Field(default="yolov8n-sonar-baseline", description="Model version provenance")
 
     model_config = {
         "from_attributes": True,

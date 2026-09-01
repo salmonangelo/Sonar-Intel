@@ -28,7 +28,7 @@ class SonarPreprocessingPipeline:
         self,
         tile_size: int = 640,
         tile_overlap: float = 0.20,
-        apply_clahe_enhancement: bool = True,
+        apply_clahe_enhancement: bool = False,
         blank_nadir: bool = False
     ):
         self.tile_size = tile_size

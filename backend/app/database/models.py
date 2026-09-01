@@ -68,7 +68,7 @@ class ContactModel(Base):
     review_status = Column(String(24), default="AI_CANDIDATE", index=True)  # AI_CANDIDATE, CONFIRMED, FALSE_POSITIVE, UNCERTAIN
     review_note = Column(Text, nullable=True)
 
-    model_version = Column(String(32), default="yolov8n-v1")
+    model_version = Column(String(32), default="yolov8n-sonar-baseline")
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 

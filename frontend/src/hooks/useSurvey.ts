@@ -68,29 +68,36 @@ export function useSurvey() {
     }
   }, [selectedContact, survey]);
 
-  const loadDemoSurvey = useCallback(async () => {
+  const loadCuratedSample = useCallback(async (sampleId: string) => {
     setLoading(true);
     setError(null);
     try {
-      // Create survey reference to pre-seeded demo
-      const demoSurvey: SurveyUploadResponse = {
-        survey_id: 'SURVEY_001',
-        filename: 'survey_001_raw.png',
-        image_width: 1280,
-        image_height: 1800,
-        data_quality: 0.96,
-        has_navigation: true,
-        raw_image_url: '/api/surveys/SURVEY_001/image/raw',
-        processed_image_url: '/api/surveys/SURVEY_001/image/processed',
-        message: 'Demo survey loaded from local catalog.'
-      };
-      await loadSurvey(demoSurvey);
+      const data = await apiService.loadDemoSample(sampleId);
+      setSurvey(data.survey);
+      setContacts(data.contacts);
+      if (data.contacts && data.contacts.length > 0) {
+        setSelectedContact(data.contacts[0]);
+      } else {
+        setSelectedContact(null);
+      }
+      try {
+        const sum = await apiService.getSurveySummary(data.survey.survey_id);
+        setSummary(sum);
+        const track = await apiService.getSurveyTrack(data.survey.survey_id);
+        setNavTrack(track);
+      } catch (e) {
+        // Nav track or summary might be partial
+      }
     } catch (err: any) {
-      setError('Failed to load demo survey.');
+      setError(err.response?.data?.detail || `Failed to load demo sample '${sampleId}'.`);
     } finally {
       setLoading(false);
     }
-  }, [loadSurvey]);
+  }, []);
+
+  const loadDemoSurvey = useCallback(async () => {
+    return loadCuratedSample('survey_001');
+  }, [loadCuratedSample]);
 
   return {
     survey,
@@ -106,6 +113,7 @@ export function useSurvey() {
     runAnalysis,
     submitReview,
     loadDemoSurvey,
+    loadCuratedSample,
     setError
   };
 }

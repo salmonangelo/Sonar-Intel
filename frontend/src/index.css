@@ -1,27 +1,31 @@
 @import "tailwindcss";
 
-
 :root {
-  --bg-deep: #050b14;
-  --bg-panel: #0a1322;
-  --bg-card: #0f1c30;
-  --bg-hover: #162842;
-  --border-dim: #1a2f4c;
-  --border-bright: #254b77;
+  --bg-canvas: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-muted: #f1f5f9;
+  --bg-nav: #0b1329;
+  --bg-acoustic: #070c18;
 
-  --accent-cyan: #00f0ff;
-  --accent-emerald: #10b981;
-  
-  --priority-high: #ef4444;
-  --priority-med: #f59e0b;
-  --priority-low: #38bdf8;
+  --border-default: #e2e8f0;
+  --border-subtle: #f1f5f9;
+  --border-strong: #cbd5e1;
 
-  --text-main: #f1f5f9;
-  --text-muted: #94a3b8;
-  --text-faint: #64748b;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-light: #f8fafc;
 
-  --font-mono: 'JetBrains Mono', monospace;
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --action-primary: #0f172a;
+  --action-hover: #1e293b;
+
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #0284c7;
+
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 * {
@@ -31,62 +35,45 @@
 }
 
 body {
-  background-color: var(--bg-deep);
-  color: var(--text-main);
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
   font-family: var(--font-sans);
   overflow: hidden;
   height: 100vh;
   width: 100vw;
   user-select: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Tactical scrollbar */
+/* Enterprise scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-deep);
+  background: #f1f5f9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-dim);
+  background: #cbd5e1;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--border-bright);
+  background: #94a3b8;
 }
 
-/* Hydrographic grid background utility */
-.sonar-grid {
-  background-image: 
-    linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
-  background-size: 32px 32px;
+/* Dark scrollbars strictly for acoustic canvas */
+.acoustic-scroll::-webkit-scrollbar-track {
+  background: #070c18;
 }
 
-.mono-nums {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
+.acoustic-scroll::-webkit-scrollbar-thumb {
+  background: #1e293b;
 }
 
-/* Glowing tactical status pills */
-.badge-high {
-  background-color: rgba(239, 68, 68, 0.15);
-  color: #fca5a5;
-  border: 1px solid rgba(239, 68, 68, 0.5);
-}
-
-.badge-med {
-  background-color: rgba(245, 158, 11, 0.15);
-  color: #fcd34d;
-  border: 1px solid rgba(245, 158, 11, 0.5);
-}
-
-.badge-low {
-  background-color: rgba(56, 189, 248, 0.15);
-  color: #7dd3fc;
-  border: 1px solid rgba(56, 189, 248, 0.5);
+.acoustic-scroll::-webkit-scrollbar-thumb:hover {
+  background: #334155;
 }

@@ -1,152 +1,191 @@
-import React from 'react';
-import { Layers, CheckCircle2, AlertTriangle, HelpCircle, FileDown, Play, Navigation } from 'lucide-react';
-import { SurveyUploadResponse, SurveySummary, Contact } from '../../types/detection';
+import React, { useState } from 'react';
+import { 
+  LayoutDashboard, 
+  Waves, 
+  CheckCircle2, 
+  Compass, 
+  Cpu, 
+  FileText, 
+  Play, 
+  Search, 
+  User, 
+  Anchor 
+} from 'lucide-react';
+import { SurveyUploadResponse, Contact } from '../../types/detection';
+
+export type ActiveScreen = 
+  | 'dashboard' 
+  | 'sonar-analysis' 
+  | 'contact-verification' 
+  | 'gis-mapping' 
+  | 'ai-pipeline' 
+  | 'reports';
 
 interface SidebarProps {
+  activeScreen: ActiveScreen;
+  onSelectScreen: (screen: ActiveScreen) => void;
   survey: SurveyUploadResponse | null;
-  summary: SurveySummary | null;
   contacts: Contact[];
+  selectedContact?: Contact | null;
   analyzing: boolean;
   onRunAnalysis: () => void;
-  onExportGeoJSON: () => void;
-  onExportCSV: () => void;
+  onSelectContact?: (contact: Contact) => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
+  activeScreen,
+  onSelectScreen,
   survey,
-  summary,
   contacts,
   analyzing,
   onRunAnalysis,
-  onExportGeoJSON,
-  onExportCSV
+  onSelectContact
 }) => {
-  const highCount = summary?.high_priority ?? contacts.filter(c => c.priority === 'HIGH').length;
-  const medCount = summary?.medium_priority ?? contacts.filter(c => c.priority === 'MEDIUM').length;
-  const lowCount = summary?.low_priority ?? contacts.filter(c => c.priority === 'LOW').length;
-  const reviewedCount = summary?.reviewed_count ?? contacts.filter(c => c.review_status !== 'AI_CANDIDATE').length;
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredContacts = searchQuery.trim()
+    ? contacts.filter(c => {
+        const q = searchQuery.toLowerCase().trim();
+        return (
+          c.contact_id.toLowerCase().includes(q) ||
+          c.priority.toLowerCase().includes(q) ||
+          c.review_status.toLowerCase().includes(q) ||
+          c.class_name.toLowerCase().includes(q)
+        );
+      })
+    : [];
+
+  const navItems = [
+    { id: 'dashboard' as ActiveScreen, label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'sonar-analysis' as ActiveScreen, label: 'Sonar Analysis', icon: Waves },
+    { id: 'contact-verification' as ActiveScreen, label: 'Contact Verification', icon: CheckCircle2 },
+    { id: 'gis-mapping' as ActiveScreen, label: 'GIS Mapping', icon: Compass },
+    { id: 'ai-pipeline' as ActiveScreen, label: 'AI Pipeline', icon: Cpu },
+    { id: 'reports' as ActiveScreen, label: 'Reports', icon: FileText },
+  ];
 
   return (
-    <aside className="w-64 border-r border-[#1a2f4c] bg-[#070e1a] flex flex-col justify-between p-3 select-none text-xs">
-      {/* Top Section: Survey Info & Triage Stats */}
+    <aside className="w-60 border-r border-[#172342] bg-[#0b1329] flex flex-col justify-between p-3 select-none text-xs font-sans">
       <div className="space-y-4">
-        {/* Survey Info Card */}
-        <div className="p-2.5 rounded bg-[#0b1626] border border-[#1a2f4c]">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[10px] uppercase tracking-wider text-slate-400 font-mono">MISSION SWATH</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded bg-cyan-950 text-cyan-400 border border-cyan-800/40">
+        {/* Navigation Items Matching Figma Sidebar */}
+        <div className="space-y-1">
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold px-3 py-1">
+            APPLICATION VIEWS
+          </div>
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeScreen === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => onSelectScreen(item.id)}
+                className={`w-full py-2 px-3 rounded-lg flex items-center gap-2.5 text-xs font-medium transition-all ${
+                  isActive
+                    ? 'bg-[#182649] text-white font-semibold shadow-xs'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-[#111d38]'
+                }`}
+              >
+                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Survey Provenance Card */}
+        <div className="p-3 rounded-lg bg-[#111d38] border border-[#1e3059] space-y-2">
+          <div className="flex items-center justify-between text-[10px]">
+            <span className="text-slate-400 font-semibold uppercase">ACTIVE SWATH</span>
+            <span className={`px-1.5 py-0.2 rounded font-medium ${
+              survey ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-slate-800 text-slate-400'
+            }`}>
               {survey ? 'INGESTED' : 'AWAITING'}
             </span>
           </div>
 
           {survey ? (
-            <div className="space-y-1 font-mono text-[11px]">
-              <div className="truncate text-slate-200 font-medium">{survey.filename}</div>
-              <div className="flex justify-between text-slate-400">
-                <span>Dimensions:</span>
-                <span className="text-slate-200">{survey.image_width} × {survey.image_height} px</span>
+            <div className="space-y-1 text-xs">
+              <div className="truncate text-slate-100 font-medium">{survey.filename}</div>
+              <div className="flex justify-between text-slate-400 text-[11px]">
+                <span>Quality Score:</span>
+                <span className="text-emerald-400 font-semibold">{Math.round(survey.data_quality * 100)}%</span>
               </div>
-              <div className="flex justify-between text-slate-400">
-                <span>Signal Quality:</span>
-                <span className="text-emerald-400 font-bold">{Math.round(survey.data_quality * 100)}%</span>
-              </div>
-              <div className="flex justify-between text-slate-400">
-                <span>Navigation:</span>
-                <span className={survey.has_navigation ? 'text-cyan-300' : 'text-slate-500'}>
-                  {survey.has_navigation ? 'SYNCED' : 'NONE'}
-                </span>
+              <div className="flex justify-between text-slate-400 text-[11px]">
+                <span>AI Candidates:</span>
+                <span className="text-slate-200 font-bold">{contacts.length}</span>
               </div>
             </div>
           ) : (
-            <p className="text-slate-500 text-[11px] italic">No sonar swath loaded. Upload an SSS image or click "Load Demo Survey".</p>
+            <p className="text-slate-400 text-[11px] italic">No active swath loaded.</p>
+          )}
+
+          {survey && (
+            <button
+              onClick={onRunAnalysis}
+              disabled={analyzing}
+              className={`w-full mt-2 py-1.5 rounded-md text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                analyzing
+                  ? 'bg-slate-800 text-slate-400 border border-slate-700 animate-pulse cursor-wait'
+                  : 'bg-white hover:bg-slate-100 text-slate-900 shadow-xs'
+              }`}
+            >
+              <Play className="w-3 h-3 fill-current" />
+              <span>{analyzing ? 'PROCESSING...' : 'RUN INFERENCE'}</span>
+            </button>
           )}
         </div>
 
-        {/* Trigger Analysis Button */}
-        {survey && (
-          <button
-            onClick={onRunAnalysis}
-            disabled={analyzing}
-            className={`w-full py-2.5 px-3 rounded font-mono text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
-              analyzing
-                ? 'bg-cyan-950 text-cyan-400 border border-cyan-800 animate-pulse cursor-wait'
-                : 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.3)]'
-            }`}
-          >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            <span>{analyzing ? 'PROCESSING SWATH...' : 'RUN ANALYSIS PIPELINE'}</span>
-          </button>
-        )}
-
-        {/* Priority Breakdown */}
-        <div className="space-y-2">
-          <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 flex items-center justify-between">
-            <span>TRIAGE STATS</span>
-            <span className="text-cyan-400">{contacts.length} TOTAL</span>
-          </div>
-
-          <div className="space-y-1.5 font-mono">
-            <div className="flex items-center justify-between p-2 rounded bg-[#0b1626] border border-red-900/40">
-              <div className="flex items-center gap-2 text-red-400">
-                <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_6px_#ef4444]" />
-                <span className="font-semibold">HIGH PRIORITY</span>
-              </div>
-              <span className="font-bold text-red-300">{highCount}</span>
+        {/* Quick Contact Search */}
+        {contacts.length > 0 && (
+          <div className="space-y-1.5">
+            <div className="text-[10px] uppercase tracking-wider text-slate-400 flex items-center justify-between px-1">
+              <span className="flex items-center gap-1"><Search className="w-3 h-3" /> CANDIDATE SEARCH</span>
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} className="text-[10px] text-slate-400 hover:text-white underline">
+                  Clear
+                </button>
+              )}
             </div>
-
-            <div className="flex items-center justify-between p-2 rounded bg-[#0b1626] border border-amber-900/40">
-              <div className="flex items-center gap-2 text-amber-400">
-                <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_6px_#f59e0b]" />
-                <span className="font-semibold">MEDIUM PRIORITY</span>
-              </div>
-              <span className="font-bold text-amber-300">{medCount}</span>
-            </div>
-
-            <div className="flex items-center justify-between p-2 rounded bg-[#0b1626] border border-blue-900/40">
-              <div className="flex items-center gap-2 text-sky-400">
-                <div className="w-2 h-2 rounded-full bg-sky-500 shadow-[0_0_6px_#38bdf8]" />
-                <span className="font-semibold">LOW PRIORITY</span>
-              </div>
-              <span className="font-bold text-sky-300">{lowCount}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Human Review Progress */}
-        <div className="p-2.5 rounded bg-[#0b1626] border border-[#1a2f4c]">
-          <div className="flex justify-between items-center text-[10px] font-mono text-slate-400 mb-1.5">
-            <span>REVIEW PROGRESS</span>
-            <span className="text-cyan-400 font-bold">{reviewedCount} / {contacts.length}</span>
-          </div>
-          <div className="w-full h-1.5 bg-[#14233a] rounded-full overflow-hidden">
-            <div
-              className="h-full bg-cyan-400 transition-all duration-300"
-              style={{ width: `${contacts.length > 0 ? (reviewedCount / contacts.length) * 100 : 0}%` }}
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Filter by ID (C001), priority..."
+              className="w-full px-2.5 py-1.5 rounded-md bg-[#111d38] border border-[#1e3059] focus:border-slate-400 text-slate-100 text-xs placeholder:text-slate-500 focus:outline-none"
             />
+            {searchQuery.trim() && (
+              <div className="max-h-32 overflow-y-auto space-y-1 mt-1">
+                {filteredContacts.map(c => (
+                  <div
+                    key={c.contact_id}
+                    onClick={() => onSelectContact?.(c)}
+                    className="p-1.5 rounded bg-[#142242] hover:bg-[#1a2d57] border border-[#1e3059] cursor-pointer flex items-center justify-between text-xs"
+                  >
+                    <div>
+                      <span className="font-mono font-bold text-slate-200">{c.contact_id}</span>
+                      <span className="text-[10px] text-slate-400 ml-1.5">{Math.round(c.confidence * 100)}%</span>
+                    </div>
+                    <span className={`text-[9px] px-1 py-0.2 rounded font-semibold ${
+                      c.priority === 'HIGH' ? 'text-red-300 bg-red-950' : 'text-amber-300 bg-amber-950'
+                    }`}>
+                      {c.priority}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Bottom Section: Mission Exports */}
-      <div className="pt-3 border-t border-[#1a2f4c] space-y-2">
-        <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 block">EXPORT MISSION DATA</span>
-        <div className="grid grid-cols-2 gap-2 font-mono">
-          <button
-            onClick={onExportGeoJSON}
-            disabled={contacts.length === 0}
-            className="p-1.5 rounded bg-[#0c182a] hover:bg-[#132742] disabled:opacity-40 disabled:hover:bg-[#0c182a] border border-[#1a2f4c] text-cyan-300 flex items-center justify-center gap-1.5 transition-colors"
-          >
-            <FileDown className="w-3 h-3" />
-            <span>GeoJSON</span>
-          </button>
-          <button
-            onClick={onExportCSV}
-            disabled={contacts.length === 0}
-            className="p-1.5 rounded bg-[#0c182a] hover:bg-[#132742] disabled:opacity-40 disabled:hover:bg-[#0c182a] border border-[#1a2f4c] text-slate-300 flex items-center justify-center gap-1.5 transition-colors"
-          >
-            <FileDown className="w-3 h-3" />
-            <span>CSV</span>
-          </button>
+      {/* Operator Session Profile Matching Figma */}
+      <div className="p-2.5 rounded-lg bg-[#111d38] border border-[#1e3059] flex items-center gap-2.5">
+        <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-slate-200 shrink-0 font-bold text-xs">
+          CV
+        </div>
+        <div className="overflow-hidden">
+          <div className="text-xs font-semibold text-slate-100 truncate">Dr. Clara Vance</div>
+          <div className="text-[10px] text-slate-400 truncate">Senior Analyst / Operator</div>
         </div>
       </div>
     </aside>

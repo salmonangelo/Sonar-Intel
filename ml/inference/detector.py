@@ -19,15 +19,18 @@ import numpy as np
 class SonarDetector:
     def __init__(
         self,
-        model_path: str = "yolov8n.pt",
+        model_path: str = "outputs/models/yolov8n_sonar_baseline/best.pt",
         confidence_threshold: float = 0.25,
-        device: str = "cpu"
+        device: Optional[str] = None
     ):
+        import torch
+        if device is None:
+            device = "cuda:0" if torch.cuda.is_available() else "cpu"
         self.model_path = model_path
         self.confidence_threshold = confidence_threshold
         self.device = device
         self.model = None
-        self.model_version = "yolov8n-v1"
+        self.model_version = "yolov8n-sonar-baseline"
         self._initialize_model()
 
     def _initialize_model(self):

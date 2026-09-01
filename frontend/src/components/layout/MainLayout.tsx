@@ -1,45 +1,55 @@
 import React from 'react';
 import { Header } from './Header';
-import { Sidebar } from './Sidebar';
+import { Sidebar, ActiveScreen } from './Sidebar';
 import { SurveyUploadResponse, SurveySummary, Contact } from '../../types/detection';
 
 interface MainLayoutProps {
+  activeScreen: ActiveScreen;
+  onSelectScreen: (screen: ActiveScreen) => void;
   survey: SurveyUploadResponse | null;
   summary: SurveySummary | null;
   contacts: Contact[];
+  selectedContact?: Contact | null;
   analyzing: boolean;
-  onLoadDemo: () => void;
+  onLoadDemoSample: (sampleId: string) => void;
+  onCustomUploadClick?: () => void;
   onRunAnalysis: () => void;
-  onExportGeoJSON: () => void;
-  onExportCSV: () => void;
+  onSelectContact?: (contact: Contact) => void;
   children: React.ReactNode;
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({
+  activeScreen,
+  onSelectScreen,
   survey,
-  summary,
   contacts,
+  selectedContact,
   analyzing,
-  onLoadDemo,
+  onLoadDemoSample,
+  onCustomUploadClick,
   onRunAnalysis,
-  onExportGeoJSON,
-  onExportCSV,
+  onSelectContact,
   children
 }) => {
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#050b14] text-slate-100 overflow-hidden">
-      <Header surveyId={survey?.survey_id} onLoadDemo={onLoadDemo} />
+    <div className="flex flex-col h-screen w-screen bg-[#f8fafc] text-slate-900 overflow-hidden font-sans">
+      <Header 
+        surveyId={survey?.survey_id} 
+        onLoadDemoSample={onLoadDemoSample}
+        onCustomUploadClick={onCustomUploadClick}
+      />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar
+          activeScreen={activeScreen}
+          onSelectScreen={onSelectScreen}
           survey={survey}
-          summary={summary}
           contacts={contacts}
+          selectedContact={selectedContact}
           analyzing={analyzing}
           onRunAnalysis={onRunAnalysis}
-          onExportGeoJSON={onExportGeoJSON}
-          onExportCSV={onExportCSV}
+          onSelectContact={onSelectContact}
         />
-        <main className="flex-1 flex flex-col overflow-hidden bg-[#08101d] sonar-grid relative">
+        <main className="flex-1 flex flex-col overflow-hidden bg-[#f8fafc] relative">
           {children}
         </main>
       </div>

@@ -22,16 +22,19 @@ from backend.app.services.geolocation_service import GeolocationService
 class InferenceService:
     def __init__(
         self,
-        model_path: str = "ml/models/yolov8n.pt",
+        model_path: str = "outputs/models/yolov8n_sonar_baseline/best.pt",
         confidence_threshold: float = 0.25,
-        device: str = "cpu"
+        device: Optional[str] = None
     ):
+        import torch
+        if device is None:
+            device = "cuda:0" if torch.cuda.is_available() else "cpu"
         self.detector = SonarDetector(
             model_path=model_path,
             confidence_threshold=confidence_threshold,
             device=device
         )
-        self.pipeline = SonarPreprocessingPipeline()
+        self.pipeline = SonarPreprocessingPipeline(apply_clahe_enhancement=False)
 
     def run_survey_analysis(
         self,
@@ -63,9 +66,9 @@ class InferenceService:
         # 4. Geolocation service initialization
         geo_service = GeolocationService(nav_file_path=nav_file_path)
 
-        contacts: List[Contact] = []
-        for idx, cand in enumerate(filtered_candidates):
-            contact_id = f"C{idx+1:03d}"
+        # Collect and rank candidates by composite acoustic strength
+        raw_contact_items = []
+        for cand in filtered_candidates:
             bbox_dict = cand["bbox"]
 
             # Acoustic Context Extraction
@@ -93,6 +96,37 @@ class InferenceService:
                 localization_status=loc_status
             )
 
+            # Composite ranking score: confidence (0.50) + context (0.30) + shadow (0.20)
+            rank_score = (
+                cand["confidence"] * 0.50 +
+                context["context_score"] * 0.30 +
+                context["shadow_evidence"] * 0.20
+            )
+
+            raw_contact_items.append({
+                "cand": cand,
+                "context": context,
+                "lat": lat,
+                "lon": lon,
+                "loc_status": loc_status,
+                "priority_label": priority_label,
+                "rank_score": rank_score
+            })
+
+        # Sort descending: HIGH priority first, then composite rank score
+        priority_rank = {"HIGH": 3, "MEDIUM": 2, "LOW": 1}
+        raw_contact_items.sort(
+            key=lambda item: (priority_rank.get(item["priority_label"], 1), item["rank_score"]),
+            reverse=True
+        )
+
+        contacts: List[Contact] = []
+        for idx, item in enumerate(raw_contact_items):
+            contact_id = f"C{idx+1:03d}"
+            cand = item["cand"]
+            bbox_dict = cand["bbox"]
+            context = item["context"]
+
             contacts.append(Contact(
                 contact_id=contact_id,
                 survey_id=survey_id,
@@ -107,10 +141,10 @@ class InferenceService:
                 data_quality=quality_score,
                 shadow_evidence=context["shadow_evidence"],
                 context_score=context["context_score"],
-                priority=priority_label,
-                latitude=lat,
-                longitude=lon,
-                localization_status=loc_status,
+                priority=item["priority_label"],
+                latitude=item["lat"],
+                longitude=item["lon"],
+                localization_status=item["loc_status"],
                 review_status="AI_CANDIDATE",
                 review_note=None,
                 model_version=self.detector.model_version

@@ -87,4 +87,25 @@ export const apiService = {
   getProcessedImageUrl(surveyId: string): string {
     return `/api/surveys/${surveyId}/image/processed`;
   },
+
+  async getDemoSamples(): Promise<any[]> {
+    const response = await client.get('/api/demo/samples');
+    return response.data;
+  },
+
+  async loadDemoSample(sampleId: string): Promise<{ survey: SurveyUploadResponse; contacts: Contact[]; sample_info: any }> {
+    const response = await client.post(`/api/demo/load/${sampleId}`);
+    return response.data;
+  },
+
+  async getDashboardStats(): Promise<any> {
+    const response = await client.get('/api/dashboard/stats');
+    return response.data;
+  },
+
+  async getPipelineInfo(): Promise<any> {
+    const response = await client.get('/api/pipeline/info');
+    return response.data;
+  },
 };
+

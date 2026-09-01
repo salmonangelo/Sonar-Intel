@@ -140,3 +140,30 @@ class ContactRepository:
         self.db.commit()
         self.db.refresh(contact)
         return to_canonical_contact(contact)
+
+    def search_contacts(
+        self,
+        q: Optional[str] = None,
+        priority: Optional[str] = None,
+        review_status: Optional[str] = None,
+        survey_id: Optional[str] = None
+    ) -> List[Contact]:
+        """Search contacts across IDs, survey, priority, and review state."""
+        query = self.db.query(ContactModel)
+        if survey_id:
+            query = query.filter(ContactModel.survey_id == survey_id)
+        if priority:
+            query = query.filter(ContactModel.priority == priority.upper())
+        if review_status:
+            query = query.filter(ContactModel.review_status == review_status.upper())
+        if q:
+            term = f"%{q.strip()}%"
+            query = query.filter(
+                (ContactModel.contact_id.ilike(term)) |
+                (ContactModel.survey_id.ilike(term)) |
+                (ContactModel.class_name.ilike(term)) |
+                (ContactModel.review_status.ilike(term)) |
+                (ContactModel.priority.ilike(term))
+            )
+        records = query.all()
+        return [to_canonical_contact(r) for r in records]

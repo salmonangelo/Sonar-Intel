@@ -14,6 +14,9 @@ from backend.app.api.analysis import router as analysis_router
 from backend.app.api.contacts import router as contacts_router
 from backend.app.api.review import router as review_router
 from backend.app.api.reports import router as reports_router
+from backend.app.api.demo import router as demo_router
+from backend.app.api.dashboard import router as dashboard_router
+from backend.app.api.pipeline import router as pipeline_router
 
 from contextlib import asynccontextmanager
 
@@ -47,6 +50,9 @@ app.include_router(analysis_router)
 app.include_router(contacts_router)
 app.include_router(review_router)
 app.include_router(reports_router)
+app.include_router(demo_router)
+app.include_router(dashboard_router)
+app.include_router(pipeline_router)
 
 # Mount static demo/data directories if they exist
 os.makedirs("data/raw", exist_ok=True)

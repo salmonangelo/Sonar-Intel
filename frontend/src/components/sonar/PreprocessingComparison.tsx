@@ -35,7 +35,7 @@ export const PreprocessingComparison: React.FC<PreprocessingComparisonProps> = (
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          CLAHE NORM
+          NORMALIZED (1-99%)
         </button>
       </div>
 
