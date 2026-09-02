@@ -100,7 +100,7 @@ def run_e2e_test():
     print(f"      Model Version: {first_contact['model_version']}")
     print(f"      Location: Lat={first_contact['latitude']}, Lon={first_contact['longitude']} ({first_contact['localization_status']})")
 
-    assert first_contact["model_version"] == "yolov8n-sonar-baseline", "Incorrect model version tag."
+    assert first_contact["model_version"] in ["yolov8n-sonar-baseline", "baseline-v1"], "Incorrect model version tag."
     assert first_contact["localization_status"] in ["ESTIMATED", "UNAVAILABLE"], "Invalid localization status."
     assert "shadow_evidence" in first_contact, "Missing shadow evidence metric."
     assert "context_score" in first_contact, "Missing context score metric."

@@ -1,143 +1,118 @@
-# SONAR-INTEL: Final MVP Demonstration & Technical Walkthrough
+# DRISHTI YOLOv8s Detector Integration — Walkthrough
 
-## Executive Summary
+## Summary of Completed Work
 
-The **SONAR-INTEL** application has been refactored and verified into a jury-ready, operational hydrographic MVP aligned with the 6 reference Figma screens.
-
-> [!IMPORTANT]
-> **Operational System Positioning**  
-> SONAR-INTEL functions strictly as an **AI-assisted side-scan sonar anomaly detection and operator triage system**.  
-> The frozen baseline model (`yolov8n-sonar-baseline`) proposes candidate anomalies; human hydrographic surveyors verify and classify them. Fictional metrics and fabricated GPS coordinates have been eliminated. All displayed benchmarks reflect real, measured baseline results (Validation mAP@50: **6.45%**, Test mAP@50: **10.48%**).
-
----
-
-## 1. Information Architecture (The 6 Operational Screens)
-
-The interface is structured into six dedicated operational screens:
-
-### Screen 1: Dashboard Overview
-- **Operational Metrics**: Real database counts for Total Surveys, AI Candidates, Confirmed Anomalies, High Priority Candidates, False Positives, and Pending Reviews.
-- **Candidate Density Chart**: Swath-by-swath distribution of anomaly density across survey lines.
-- **Geospatial Radar / Mini Map**: Displays real estimated contact positions without synthetic coordinates.
-- **Recent Platform Activity Log**: Real-time audit log tracking ingestion, analysis, and human triage events.
-
-![Dashboard Overview](C:/Users/Asus/.gemini/antigravity-ide/brain/9f574fa6-919e-4350-aa43-a41b1b0e0078/dashboard_overview_1788273235482.png)
+The pretrained **DRISHTI YOLOv8s** side-scan sonar detector has been integrated into the SONAR-INTEL project architecture as the primary reproducible baseline. The integration satisfies all requirements:
+- Model weights (`best_detector.pt`) are used without modification.
+- Model-specific preprocessing (`drishti-prep-v1`: vectorized Lee speckle filtering + CLAHE) is applied during inference.
+- Downstream product class policy filters `crab_pot` while eligible classes (`submarine_pipeline`, `shipwreck`, `ghost_net`, `mine_cylinder`) generate canonical contacts.
+- Strict confidence separation is enforced (`model_score`, `calibrated_confidence`, `data_quality`, `acoustic_context`, `priority`).
+- Standalone FastAPI inference endpoint `POST /api/inference/detect` is available.
+- 4 comprehensive test suites (19 test cases) pass with 100% success.
+- End-to-end 8-step MVP pipeline test passes with 100% success.
 
 ---
 
-### Screen 2: Sonar Analysis Workspace
-- **Side-Scan Waterfall Swath**: High-resolution viewer with real-time contrast adjustment and 1–99% percentile normalization toggle.
-- **Candidate Bounding Boxes**: Overlaid YOLO detections with priority tags (`HIGH`, `MEDIUM`, `LOW`).
-- **Survey & Navigation Metadata**: Live readout of dynamic range, SNR quality score, and towfish status (or explicit *"Unavailable"* flag).
-- **Acoustic Evidence Cards ("Why Flagged?")**: Heuristic diagnostic breakdown showing Highlight Contrast, Shadow Deficit Score, and Context Score.
+## 1. Key Components Implemented
 
-![Sonar Analysis Workspace](C:/Users/Asus/.gemini/antigravity-ide/brain/9f574fa6-919e-4350-aa43-a41b1b0e0078/sonar_analysis_view_1788273248336.png)
+### Configuration Layer
+- **[config.py](backend/app/core/config.py)**:
+  Centralizes model path (`ml/models/dristri/best_detector.pt`), architecture parameters, preprocessing hyperparameters, and product class policies (`FILTERED_CLASSES = ["crab_pot"]`).
 
----
+### Preprocessing Layer
+- **[filters.py](ml/preprocessing/filters.py)**:
+  Vectorized OpenCV box-filter implementation of the **Lee speckle noise filter**:
+  $$\text{weight} = \max\left(0, \frac{\text{Var}(I) - \sigma_{\text{noise}}^2}{\text{Var}(I) + \epsilon}\right)$$
+- **[drishti_preprocess.py](ml/preprocessing/drishti_preprocess.py)**:
+  `drishti-prep-v1`: Grayscale percentile stretch (1%–99%) $\rightarrow$ Lee Filter ($5 \times 5$ window) $\rightarrow$ CLAHE ($2.0$ clip limit, $8 \times 8$ grid) $\rightarrow$ 3-channel BGR. Never mutates the raw source image.
 
-### Screen 3: Contact Verification Workflow
-- **Acoustic Crop & Full Context**: Zoomed optical inspection of acoustic highlight and acoustic shadow void.
-- **Telemetry Readouts**: Pixel bounding coordinates, estimated target size, detector confidence, and spatial status.
-- **One-Click Operator Triage**: One-click action buttons:
-  - `[Confirm Contact]` (Emerald)
-  - `[False Positive]` (Red)
-  - `[Needs Review]` (Amber)
-- **Operator Notes & Audit Trail**: Notes persistence with recorded reviewer identity and timestamps.
+### Decoupled Detector & Internal Schema
+- **[drishti_detector.py](ml/inference/drishti_detector.py)**:
+  - `DrishtiDetector`: Singleton process-level model caching (`_model_cache`), automated CUDA/CPU selection, preprocessing, inference execution, bounding box clamping, and class policy filtering.
+  - `DrishtiDetection`: Clean model-agnostic dataclass schema.
 
-![Contact Verification Workflow](C:/Users/Asus/.gemini/antigravity-ide/brain/9f574fa6-919e-4350-aa43-a41b1b0e0078/contact_verification_view_1788273267457.png)
+### Canonical Contact Transformation & Confidence Separation
+- **[contact.py](backend/app/schemas/contact.py)**:
+  Updated canonical `Contact` schema with explicit `model_score` (raw YOLO confidence), `calibrated_confidence` (None until calibrated), `detection_timestamp`, and `review_status="AI_CANDIDATE"`.
+- **[transformer.py](backend/app/services/transformer.py)**:
+  Adapts `DrishtiDetection` $\rightarrow$ `Contact`. Enforces product filtering so `crab_pot` detections never generate production contacts, attaches acoustic context scores, operational priority, and WGS-84 coordinates without synthetic fabrication.
 
----
+### Backend Orchestration & FastAPI Endpoint
+- **[inference_service.py](backend/app/services/inference_service.py)**:
+  Orchestrates swath tiling ($640 \times 640$ with 20% overlap), tile-based DRISHTI inference, NMS deduplication, acoustic context analysis, geolocation, and contact transformation.
+- **[inference.py](backend/app/api/inference.py)**:
+  `POST /api/inference/detect`: Accepts image uploads via `multipart/form-data`, executes DRISHTI detector, and returns standardized detection JSON.
+- **[main.py](backend/app/main.py)**:
+  Mounted `inference_router` under `/api/inference`.
 
-### Screen 4: GIS Mapping & Spatial Context
-- **Full MapLibre GL Nautical Canvas**: OpenStreetMap base layer with dark bathymetric styling.
-- **Interactive Priority Pins**: Color-coded candidate markers (Red glow for High, Amber for Medium, Cyan for Low).
-- **Spatial Filters**: One-click filtering by Priority (`High Only`, `Confirmed Only`, `All Candidates`).
-- **Datum & Positioning Specifications**: Strict display of WGS 84 (EPSG:4326) and dead-reckoning estimation provenance.
-
-![GIS Mapping](C:/Users/Asus/.gemini/antigravity-ide/brain/9f574fa6-919e-4350-aa43-a41b1b0e0078/gis_mapping_view_1788273303151.png)
-
----
-
-### Screen 5: AI Pipeline & Inference Monitor
-- **Active Pipeline Flowchart**: Visual 8-stage architecture:
-  `[Raw Ingest]` &rarr; `[Quality SNR]` &rarr; `[1-99% Normalization]` &rarr; `[640x640 Tiling]` &rarr; `[YOLOv8n GPU]` &rarr; `[NMS & Ranking]` &rarr; `[Operator Triage]` &rarr; `[GIS & Export]`
-- **Verified Baseline Metrics**:
-  - Validation mAP@50: **6.45%** (1,256 validation tiles across 55 sites)
-  - Frozen Test mAP@50: **10.48%** (1,256 held-out test tiles across 46 sites)
-  - Test Precision / Recall: **18.9% / 12.9%**
-  - Processing Speed: **~18.7 ms / tile (52.3 FPS)** on NVIDIA GeForce RTX 3050 Laptop GPU.
-- **Model Card Specs & Telemetry**: Ultralytics YOLOv8n, 3.01M parameters, 8.2 GFLOPs, FP16 AMP.
-
-![AI Pipeline Monitor](C:/Users/Asus/.gemini/antigravity-ide/brain/9f574fa6-919e-4350-aa43-a41b1b0e0078/ai_pipeline_view_1788273325772.png)
+### Baseline Documentation
+- **[DRISHTI_BASELINE.md](docs/models/DRISHTI_BASELINE.md)**:
+  Documents SHA256 (`2f55eec5d8fe6b4737706392e259c02660a8542cddbcbd603f96d606c54cb927`), HuggingFace provenance, classes, product filtering policy, preprocessing specifications, and failure analysis taxonomy.
 
 ---
 
-### Screen 6: Reports & Export Central
-- **Detections CSV**: Tabular export containing IDs, bounding boxes, confidences, acoustic scores, and review statuses.
-- **Spatial GeoJSON**: RFC 7946 compliant FeatureCollection of Point geometries for QGIS/ArcGIS.
-- **Executive Survey Summary**: Structured summary of dynamic range, candidate counts, and triage rates.
-- **Model Card**: Specification document for `yolov8n-sonar-baseline`.
+## 2. Verification Results
 
-![Reports and Export](C:/Users/Asus/.gemini/antigravity-ide/brain/9f574fa6-919e-4350-aa43-a41b1b0e0078/reports_view_1788273349466.png)
+### Automated Pytest Suite (19/19 Passing)
+Command:
+```powershell
+.\.venv\Scripts\pytest.exe tests/ -v
+```
 
----
+Output:
+```
+tests/test_contact_transformation.py::TestContactTransformation::test_filtered_classes_are_excluded_from_contacts PASSED
+tests/test_contact_transformation.py::TestContactTransformation::test_no_coordinate_fabrication PASSED
+tests/test_contact_transformation.py::TestContactTransformation::test_coordinate_attachment_when_navigation_valid PASSED
+tests/test_contact_transformation.py::TestContactTransformation::test_priority_assignment_rules PASSED
+tests/test_drishti_detector.py::TestDrishtiDetector::test_model_loads_successfully PASSED
+tests/test_drishti_detector.py::TestDrishtiDetector::test_expected_class_mapping PASSED
+tests/test_drishti_detector.py::TestDrishtiDetector::test_model_cached_per_process PASSED
+tests/test_drishti_detector.py::TestDrishtiDetector::test_inference_on_real_sonar_imagery PASSED
+tests/test_drishti_detector.py::TestDrishtiDetector::test_empty_detection_handling PASSED
+tests/test_drishti_detector.py::TestDrishtiDetector::test_crab_pot_is_tagged_as_filtered PASSED
+tests/test_drishti_preprocessing.py::TestDrishtiPreprocessing::test_lee_filter_preserves_dimensions_and_dtype PASSED
+tests/test_drishti_preprocessing.py::TestDrishtiPreprocessing::test_lee_filter_noise_suppression PASSED
+tests/test_drishti_preprocessing.py::TestDrishtiPreprocessing::test_lee_filter_invalid_window_size PASSED
+tests/test_drishti_preprocessing.py::TestDrishtiPreprocessing::test_drishti_preprocess_immutability PASSED
+tests/test_drishti_preprocessing.py::TestDrishtiPreprocessing::test_drishti_preprocess_deterministic PASSED
+tests/test_drishti_preprocessing.py::TestDrishtiPreprocessing::test_drishti_preprocess_handles_empty_image PASSED
+tests/test_inference_api.py::TestInferenceAPI::test_detect_endpoint_valid_image PASSED
+tests/test_inference_api.py::TestInferenceAPI::test_detect_endpoint_rejects_non_image PASSED
+tests/test_inference_api.py::TestInferenceAPI::test_detect_endpoint_rejects_empty_file PASSED
 
-## 2. Complete End-to-End Browser Session Recording
+======================= 19 passed in 11.21s =======================
+```
 
-The browser subagent executed a full automated pass across all 6 screens, verifying data flow, interactive controls, and backend integration:
+### End-to-End Pipeline Test (8/8 Steps Passing)
+Command:
+```powershell
+.\.venv\Scripts\python.exe scripts/e2e_mvp_test.py
+```
 
-![Automated Full MVP Session Tour](C:/Users/Asus/.gemini/antigravity-ide/brain/9f574fa6-919e-4350-aa43-a41b1b0e0078/sonar_intel_mvp_tour_1788273220197.webp)
+Output:
+```
+[Step 1] Probing API Health Probe (/api/health)...
+  --> Health probe PASSED
+[Step 2] Ingesting Real Sonar Swath & Navigation...
+  --> Ingestion PASSED: Survey ID = SURV_20260902_214759 | Resolution = 1280x1800
+[Step 3] Executing Real Inference via API...
+  --> Analysis PASSED: 3 contacts discovered in 5520.2 ms
+  --> Sample Contact: ID=C001, Class=ghost_net, Conf=0.69, Priority=HIGH
+      Model Version: baseline-v1
+      Location: Lat=11.235591, Lon=76.543735 (ESTIMATED)
+[Step 4] Verifying Database Records in Storage...
+  --> Database persistence VERIFIED: 3 records stored.
+[Step 5] Fetching GeoJSON (/api/surveys/.../geojson)...
+  --> GeoJSON export VERIFIED: 3 spatial features returned.
+[Step 6] Testing Search Functionality (/api/contacts/search)...
+  --> Contact search VERIFIED: Successfully queried C001
+[Step 7] Testing Human Triage Review on C001...
+  --> Human review VERIFIED: Status updated to CONFIRMED
+[Step 8] Fetching Survey Summary (/api/surveys/.../summary)...
+  --> Summary API VERIFIED: Total=3 | High=3 | Reviewed=1
 
----
-
-## 3. Curated Held-Out Test Datasets (Demo Mode)
-
-A curated demo dataset selector is mounted in the top navigation header, enabling instant, controlled demonstrations:
-
-| Sample Name | Dataset Provenance | Dimensions | Purpose in Demo |
-| :--- | :--- | :--- | :--- |
-| **Viator-04** | `AI4Shipwrecks/test/images/` | 2143 &times; 1728 px | **Primary True Positive Wreck Benchmark**: Demonstrates genuine wreck detection (`C001`, **83.0% confidence**) with prominent hull highlight and down-range acoustic shadow void. |
-| **Artificial Reef-02** | `AI4Shipwrecks/test/images/` | 2480 &times; 1728 px | **Challenging Seabed Clutter**: Demonstrates operator triage rejecting natural geological rocky ridges and false alarms. |
-| **Survey-001** | Operational Reference Swath | 1280 &times; 1800 px | **Towfish Navigation Integration**: Demonstrates along-track navigation trackline and estimated WGS-84 coordinates. |
-
----
-
-## 4. Step-by-Step Jury Demonstration Script
-
-Follow this 5-minute presentation script during jury evaluations:
-
-1. **Step 1: Introduction (Dashboard Screen)**
-   - Open `http://127.0.0.1:5173/`.
-   - Point to the **Total Surveys (8)** and **AI Candidates** KPI cards.
-   - Explain the mission: *"SONAR-INTEL is an operational decision-support tool for hydrographic survey analysts. Side-scan sonar swaths are massive; our AI flags acoustic anomaly candidates so the human expert can prioritize review."*
-
-2. **Step 2: Sonar Analysis Workspace**
-   - Click **Sonar Analysis** in the sidebar.
-   - Show the large side-scan waterfall displaying `Viator-04`.
-   - Toggle between **1-99% NORMALIZED** and **RAW ACOUSTIC** to demonstrate swath-level contrast stretching without CLAHE artifacts.
-   - Click candidate `C001` (highlighted in red, 83% confidence).
-   - Draw attention to the bottom diagnostic bar: point to the **Shadow Deficit Score (78%)** and **Context Contrast Score (62%)**.
-
-3. **Step 3: Human-in-the-Loop Triage (Contact Verification)**
-   - Click **VERIFY CANDIDATE** or navigate to **Contact Verification**.
-   - Show the zoomed acoustic crop isolating the wreck's highlight and shadow.
-   - Highlight that spatial coordinates honestly show *"Spatial coordinates unavailable"* because this swath lacks a synchronized navigation log.
-   - Click **[Confirm Contact]**.
-   - Notice the status badge immediately switches to **CONFIRMED** (Emerald) and appears in the **Verification Audit Log**.
-
-4. **Step 4: Spatial Context (GIS Mapping)**
-   - Click **GIS Mapping** in the sidebar.
-   - Show the MapLibre nautical chart.
-   - Select **Load Demo Swath &rarr; Survey-001** to show live towfish track interpolation with real estimated coordinates (11.23°N, 76.54°E).
-   - Toggle the **Confirmed** filter button to show filtered spatial candidates.
-
-5. **Step 5: Scientific Honesty (AI Pipeline)**
-   - Click **AI Pipeline** in the sidebar.
-   - Walk through the 8-stage architecture flowchart.
-   - Highlight the honest metrics:
-     - *"Our baseline model achieves 6.45% mAP50 on validation and 10.48% on the held-out test set at 18.7 ms per tile on an RTX 3050 GPU."*
-     - Emphasize the disclaimer: *"We report real measured metrics—not synthetic 95% claims. The model's role is candidate proposal, leaving final verification to the human operator."*
-
-6. **Step 6: Data Products (Reports)**
-   - Click **Reports** in the sidebar.
-   - Click **Download CSV** and **Export GeoJSON** to show real standard outputs ready for hydrographic GIS workflows (QGIS, ArcGIS).
+=================================================================
+ALL 8 END-TO-END PIPELINE VALIDATION STEPS PASSED SUCCESSFULLY!
+=================================================================
+```
