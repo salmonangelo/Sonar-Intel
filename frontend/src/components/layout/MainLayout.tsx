@@ -32,7 +32,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   children
 }) => {
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#f8fafc] text-slate-900 overflow-hidden font-sans">
+    <div className="flex flex-col h-screen w-screen bg-[#050a14] text-slate-100 overflow-hidden font-sans">
       <Header 
         surveyId={survey?.survey_id} 
         onLoadDemoSample={onLoadDemoSample}
@@ -49,7 +49,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           onRunAnalysis={onRunAnalysis}
           onSelectContact={onSelectContact}
         />
-        <main className="flex-1 flex flex-col overflow-hidden bg-[#f8fafc] relative">
+        <main className="flex-1 flex flex-col overflow-hidden bg-[#060b17] relative">
           {children}
         </main>
       </div>

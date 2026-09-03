@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Contact, NavWaypoint } from '../../types/detection';
-import { MapPin, Navigation, Compass, Layers, Radio } from 'lucide-react';
 
 interface MapViewProps {
   contacts: Contact[];
@@ -91,31 +90,31 @@ export const MapView: React.FC<MapViewProps> = ({
       const el = document.createElement('div');
       el.className = 'cursor-pointer select-none transition-transform hover:scale-125';
 
-      let bg = '#06b6d4';
-      let glow = '0 0 12px rgba(6, 182, 212, 0.8)';
-      if (contact.priority === 'HIGH') {
-        bg = '#ef4444';
-        glow = '0 0 14px rgba(239, 68, 68, 0.9)';
-      } else if (contact.priority === 'MEDIUM') {
-        bg = '#f59e0b';
-        glow = '0 0 12px rgba(245, 158, 11, 0.8)';
+      let bg = '#ff383c'; // Placely Vivid Red for high priority
+      let glow = '0 0 14px rgba(255, 56, 60, 0.8)';
+      if (contact.priority === 'MEDIUM') {
+        bg = '#ffd400'; // Placely Yellow Accent
+        glow = '0 0 12px rgba(255, 212, 0, 0.8)';
+      } else if (contact.priority === 'LOW') {
+        bg = '#8e8e93';
+        glow = '0 0 8px rgba(142, 142, 147, 0.6)';
       }
 
       el.innerHTML = `
         <div style="
           background-color: ${bg};
-          width: ${isSelected ? '24px' : '18px'};
-          height: ${isSelected ? '24px' : '18px'};
+          width: ${isSelected ? '26px' : '20px'};
+          height: ${isSelected ? '26px' : '20px'};
           border-radius: 50%;
           border: 2px solid #ffffff;
           box-shadow: ${glow};
           display: flex;
           align-items: center;
           justify-content: center;
-          font-family: monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 9px;
           font-weight: 800;
-          color: #000;
+          color: ${contact.priority === 'MEDIUM' ? '#1f1f1f' : '#ffffff'};
         ">
           ${contact.contact_id}
         </div>
@@ -140,47 +139,15 @@ export const MapView: React.FC<MapViewProps> = ({
       mapInstance.current.flyTo({
         center: [selectedContact.longitude, selectedContact.latitude],
         zoom: 16,
-        essential: true
+        essential: true,
+        speed: 1.2
       });
     }
   }, [selectedContact]);
 
   return (
-    <div className="relative flex-1 h-full w-full bg-[#030712] overflow-hidden select-none">
-      {/* MapLibre DOM container */}
+    <div className="w-full h-full relative">
       <div ref={mapContainer} className="w-full h-full" />
-
-      {/* Map Legend Overlay */}
-      <div className="absolute bottom-4 left-4 p-3 rounded-xl bg-[#070e1e]/90 backdrop-blur-md border border-[#14244a] text-[11px] font-mono space-y-1.5 z-10 shadow-lg">
-        <div className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5">
-          <Radio className="w-3 h-3 text-cyan-400" /> SPATIAL TARGET CLASSIFICATION
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]" />
-          <span className="text-slate-200">HIGH PRIORITY (Deficit Shadow)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-[0_0_8px_#f59e0b]" />
-          <span className="text-slate-200">MEDIUM PRIORITY (Proposal)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#06b6d4]" />
-          <span className="text-slate-200">LOW / UNVERIFIED</span>
-        </div>
-      </div>
-
-      {/* Coordinate & Heading Telemetry */}
-      {selectedContact && selectedContact.latitude != null && (
-        <div className="absolute top-4 left-4 p-2.5 rounded-xl bg-[#070e1e]/95 backdrop-blur-md border border-[#172b54] text-xs font-mono text-cyan-300 flex items-center gap-2.5 z-10 shadow-lg">
-          <Navigation className="w-4 h-4 text-cyan-400" />
-          <span>
-            {selectedContact.latitude.toFixed(6)}° N, {selectedContact.longitude?.toFixed(6)}° E
-          </span>
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-950 border border-cyan-800 text-cyan-300 font-bold">
-            {selectedContact.localization_status}
-          </span>
-        </div>
-      )}
     </div>
   );
 };
