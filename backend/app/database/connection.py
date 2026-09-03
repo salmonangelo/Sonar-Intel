@@ -14,23 +14,23 @@ Base = declarative_base()
 
 DATABASE_URL = os.environ.get(
     "DATABASE_URL",
-    "postgresql+psycopg://sonar_user:sonar_password@localhost:5432/sonar_intel"
+    "postgresql+psycopg://sonar_user:sonar_password@localhost:5433/sonar_intel"
 )
 
 # Test primary connection and fallback gracefully if needed
 engine = None
 try:
     if "postgresql" in DATABASE_URL:
-        # Quick connect check with 1s timeout
+        # Quick connect check with 2s timeout
         test_engine = create_engine(
             DATABASE_URL,
             pool_pre_ping=False,
-            connect_args={"connect_timeout": 1}
+            connect_args={"connect_timeout": 2}
         )
         with test_engine.connect() as conn:
             pass
         engine = test_engine
-        print("[Database] Successfully connected to PostGIS PostgreSQL database.")
+        print(f"[Database] Successfully connected to PostGIS PostgreSQL database at {DATABASE_URL.split('@')[-1]}.")
 except Exception as e:
     print(f"[Database] Primary PostGIS connection unavailable ({e}). Activating SQLite local fallback mode.")
     engine = None

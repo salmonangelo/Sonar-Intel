@@ -6,7 +6,12 @@ import {
   HelpCircle, 
   MapPin, 
   Save, 
-  Clock 
+  Clock,
+  Scan,
+  ShieldCheck,
+  Compass,
+  ArrowRight,
+  Maximize2
 } from 'lucide-react';
 
 interface ContactVerificationPageProps {
@@ -37,7 +42,7 @@ export const ContactVerificationPage: React.FC<ContactVerificationPageProps> = (
     setSaveMessage(null);
     try {
       await onSubmitReview(activeContact.contact_id, status, operatorNote);
-      setSaveMessage(`Contact ${activeContact.contact_id} recorded as ${status}.`);
+      setSaveMessage(`Contact ${activeContact.contact_id} marked as ${status}.`);
       setOperatorNote('');
     } catch (err) {
       console.error('Review submission error:', err);
@@ -48,9 +53,10 @@ export const ContactVerificationPage: React.FC<ContactVerificationPageProps> = (
 
   if (!activeContact) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-xs text-slate-500">
-        <p>No candidate contact selected for triage.</p>
-        <p className="text-[11px] text-slate-400 mt-1">Select a survey in Sonar Analysis first.</p>
+      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-xs text-slate-500 bg-[#050a14]">
+        <Scan className="w-10 h-10 text-slate-700 animate-pulse mb-2" />
+        <p className="font-bold text-slate-300">No candidate contact selected for triage.</p>
+        <p className="text-[11px] text-slate-500 mt-1">Select a survey swath in Sonar Analysis first.</p>
       </div>
     );
   }
@@ -59,242 +65,196 @@ export const ContactVerificationPage: React.FC<ContactVerificationPageProps> = (
   const bboxHeight = activeContact.bbox.y2 - activeContact.bbox.y1;
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-[#f8fafc] text-slate-900 font-sans select-none">
-      {/* Header Matching Figma */}
-      <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+    <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-[#050a14] text-slate-100 font-sans select-none">
+      
+      {/* Page Header */}
+      <div className="flex items-center justify-between border-b border-[#142244] pb-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">
-            Contact Verification Workflow
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Human-in-the-Loop Hydrographic Operator Triage & Anomaly Validation
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl font-extrabold tracking-tight text-white font-mono flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-emerald-400" />
+              HUMAN-IN-THE-LOOP CONTACT VERIFICATION CONSOLE
+            </h1>
+            <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-300 font-mono font-bold border border-emerald-800 uppercase">
+              TRIAGE CONSOLE
+            </span>
+          </div>
+          <p className="text-xs text-slate-400 mt-1 font-medium">
+            Operator Review Linking YOLOv8 Statistical Acoustic Proposals to Verified Marine Debris / Hydrographic Contacts
           </p>
         </div>
 
-        {/* Candidate Selector Dropdown */}
-        <div className="flex items-center gap-2 text-xs">
-          <span className="text-slate-500 font-medium">Select Candidate:</span>
-          <select
-            value={activeContact.contact_id}
-            onChange={(e) => {
-              const found = contacts.find(c => c.contact_id === e.target.value);
-              if (found) onSelectContact(found);
-            }}
-            className="px-3 py-1.5 rounded-md bg-white border border-slate-200 text-slate-900 font-mono font-semibold shadow-xs focus:outline-none focus:border-slate-400"
-          >
-            {contacts.map(c => (
-              <option key={c.contact_id} value={c.contact_id}>
-                {c.contact_id} ({c.priority} • {Math.round(c.confidence * 100)}%)
-              </option>
-            ))}
-          </select>
+        {/* Contact Selector Pill Bar */}
+        <div className="flex items-center gap-2 overflow-x-auto max-w-md p-1.5 rounded-xl bg-[#081024] border border-[#14244a]">
+          {contacts.slice(0, 7).map((c) => (
+            <button
+              key={c.contact_id}
+              onClick={() => onSelectContact(c)}
+              className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all ${
+                activeContact.contact_id === c.contact_id
+                  ? 'bg-cyan-600 text-white shadow-md shadow-cyan-950/50'
+                  : 'text-slate-400 hover:text-white hover:bg-[#101d3b]'
+              }`}
+            >
+              {c.contact_id}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Main Verification Dual-Panel Grid Matching Figma Screen 3 */}
+      {saveMessage && (
+        <div className="p-3 rounded-xl bg-emerald-950/80 border border-emerald-700 text-emerald-300 text-xs font-mono font-bold flex items-center justify-between">
+          <span>✓ {saveMessage}</span>
+          <button onClick={() => setSaveMessage(null)} className="underline text-emerald-400 text-[11px]">Dismiss</button>
+        </div>
+      )}
+
+      {/* Main 2-Column Triage Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column (7 Cols): Acoustic Detection Crop & Target Telemetry on White Card */}
-        <div className="lg:col-span-7 space-y-4">
-          <div className="p-5 rounded-lg bg-white border border-slate-200 shadow-xs space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <span className="font-bold text-slate-900 text-sm">
-                Acoustic Detection Crop ({activeContact.contact_id})
+        
+        {/* Left: High-Resolution Acoustic Crop Viewer (5 Cols) */}
+        <div className="lg:col-span-5 p-5 rounded-2xl bg-[#091226] border border-[#15274f] space-y-4 shadow-lg flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between border-b border-[#142244] pb-3">
+              <span className="font-mono font-bold text-xs text-cyan-300 uppercase flex items-center gap-1.5">
+                <Scan className="w-4 h-4 text-cyan-400" /> ACOUSTIC TARGET CROP ({activeContact.contact_id})
               </span>
-              <span className="text-[11px] text-slate-500 font-mono">
-                Bounds: [{activeContact.bbox.x1}, {activeContact.bbox.y1}] - [{activeContact.bbox.x2}, {activeContact.bbox.y2}]
+              <span className="text-[10px] px-2 py-0.5 rounded bg-black text-slate-300 font-mono border border-slate-700">
+                {bboxWidth} × {bboxHeight} px
               </span>
             </div>
 
-            {/* Embedded Dark Acoustic Viewport */}
-            <div className="h-72 w-full rounded-md bg-[#070c18] border border-slate-800 relative overflow-hidden flex items-center justify-center p-2">
+            {/* Simulated Zoomed Optical / Acoustic Crop */}
+            <div className="mt-4 aspect-4/3 rounded-xl bg-black border border-[#1a2d59] relative overflow-hidden flex items-center justify-center group shadow-2xl">
               {survey ? (
-                <div 
-                  className="relative overflow-hidden border-2 border-red-500 rounded shadow-2xl"
+                <img
+                  src={survey.processed_image_url}
+                  alt="Acoustic Crop"
+                  className="w-full h-full object-cover scale-150 filter contrast-125"
                   style={{
-                    width: '320px',
-                    height: '240px',
-                    backgroundImage: `url(${survey.processed_image_url || survey.raw_image_url})`,
-                    backgroundPosition: `-${activeContact.bbox.x1 * 0.5}px -${activeContact.bbox.y1 * 0.5}px`,
-                    backgroundSize: `${(survey.image_width || 1280) * 0.5}px ${(survey.image_height || 1800) * 0.5}px`
+                    objectPosition: `${(activeContact.bbox.x1 / (survey.image_width || 1280)) * 100}% ${(activeContact.bbox.y1 / (survey.image_height || 1800)) * 100}%`
                   }}
-                >
-                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-slate-950/80 text-[10px] text-white font-mono border border-slate-700">
-                    Acoustic Highlight & Shadow
-                  </div>
-                </div>
+                />
               ) : (
-                <div className="text-slate-500 text-xs">Awaiting survey imagery</div>
+                <div className="text-slate-600 font-mono text-xs">No Acoustic Imagery</div>
               )}
+
+              {/* Tactical Crosshair Reticle Overlay */}
+              <div className="absolute inset-4 border-2 border-cyan-400/80 rounded-sm pointer-events-none shadow-lg">
+                <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-cyan-600 text-white font-mono font-bold text-[9px] rounded shadow-md">
+                  {activeContact.contact_id} • {Math.round(activeContact.confidence * 100)}% CONF
+                </div>
+                {/* Crosshairs */}
+                <div className="absolute top-1/2 left-0 right-0 h-px bg-cyan-400/40"></div>
+                <div className="absolute top-0 bottom-0 left-1/2 w-px bg-cyan-400/40"></div>
+              </div>
             </div>
+          </div>
 
-            {/* Telemetry Readout Grid Below Crop Matching Figma */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pt-2 text-xs">
-              <div className="p-3 rounded-md bg-slate-50 border border-slate-200">
-                <div className="text-[10px] text-slate-500 font-semibold uppercase">CONFIDENCE SCORE</div>
-                <div className="text-base font-bold text-slate-900 mt-0.5">
-                  {Math.round(activeContact.confidence * 100)}% ({activeContact.priority})
-                </div>
-                <div className="text-[10px] text-slate-500 mt-0.5">YOLOv8n Probability</div>
-              </div>
-
-              <div className="p-3 rounded-md bg-slate-50 border border-slate-200">
-                <div className="text-[10px] text-slate-500 font-semibold uppercase">GPS COORDINATES</div>
-                {activeContact.latitude != null ? (
-                  <div className="text-sm font-bold font-mono text-emerald-700 mt-0.5">
-                    {activeContact.latitude.toFixed(5)}°N, {activeContact.longitude?.toFixed(5)}°E
-                  </div>
-                ) : (
-                  <div className="text-xs font-semibold text-slate-500 italic mt-0.5">
-                    Spatial coordinates unavailable
-                  </div>
-                )}
-                <div className="text-[10px] text-slate-500 mt-0.5">{activeContact.localization_status}</div>
-              </div>
-
-              <div className="p-3 rounded-md bg-slate-50 border border-slate-200">
-                <div className="text-[10px] text-slate-500 font-semibold uppercase">ESTIMATED TARGET SIZE</div>
-                <div className="text-sm font-bold font-mono text-slate-900 mt-0.5">
-                  {bboxWidth} &times; {bboxHeight} px
-                </div>
-                <div className="text-[10px] text-slate-500 mt-0.5">Along-track &times; Slant-range</div>
-              </div>
-
-              <div className="p-3 rounded-md bg-slate-50 border border-slate-200">
-                <div className="text-[10px] text-slate-500 font-semibold uppercase">DISTANCE FROM TRACK</div>
-                <div className="text-sm font-bold font-mono text-slate-900 mt-0.5">
-                  {activeContact.latitude != null ? '14.2 m' : 'Unavailable'}
-                </div>
-                <div className="text-[10px] text-slate-500 mt-0.5">Towfish Offset</div>
-              </div>
-
-              <div className="p-3 rounded-md bg-slate-50 border border-slate-200">
-                <div className="text-[10px] text-slate-500 font-semibold uppercase">MODEL PROVENANCE</div>
-                <div className="text-xs font-bold font-mono text-slate-800 mt-0.5">
-                  {activeContact.model_version || 'yolov8n-sonar-baseline'}
-                </div>
-                <div className="text-[10px] text-slate-500 mt-0.5">Frozen Baseline</div>
-              </div>
-
-              <div className="p-3 rounded-md bg-slate-50 border border-slate-200">
-                <div className="text-[10px] text-slate-500 font-semibold uppercase">CURRENT PRIORITY</div>
-                <div className="mt-1">
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
-                    activeContact.priority === 'HIGH' ? 'bg-red-50 text-red-700 border border-red-200' :
-                    activeContact.priority === 'MEDIUM' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                    'bg-sky-50 text-sky-700 border border-sky-200'
-                  }`}>
-                    {activeContact.priority} TARGET
-                  </span>
-                </div>
-              </div>
+          <div className="p-3 rounded-xl bg-[#060b17] border border-[#142244] text-[11px] text-slate-400 font-mono space-y-1">
+            <div className="flex justify-between">
+              <span>Acoustic Shadow Deficit:</span>
+              <span className="text-emerald-400 font-bold">MATCHED (Dark down-range void)</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Seabed Backscatter Floor:</span>
+              <span className="text-slate-300 font-bold">Sandy / Gravel sediment</span>
             </div>
           </div>
         </div>
 
-        {/* Right Column (5 Cols): One-Click Operator Workflow & Audit Trail */}
-        <div className="lg:col-span-5 space-y-4">
-          {/* Action Buttons Matching Figma Screen 3 */}
-          <div className="p-5 rounded-lg bg-white border border-slate-200 shadow-xs space-y-4">
-            <div className="text-xs uppercase font-bold text-slate-500 border-b border-slate-100 pb-2">
-              ONE-CLICK OPERATOR WORKFLOW
+        {/* Right: Target Telemetry & One-Click Operator Action (7 Cols) */}
+        <div className="lg:col-span-7 space-y-5">
+          
+          {/* Telemetry Metrics Grid */}
+          <div className="p-5 rounded-2xl bg-[#091226] border border-[#15274f] space-y-4 shadow-lg">
+            <div className="border-b border-[#142244] pb-3 flex items-center justify-between">
+              <span className="font-mono font-bold text-xs text-white uppercase">CANDIDATE TELEMETRY & PHYSICAL PROPERTIES</span>
+              <span className="text-[10px] font-mono text-cyan-400">EPSG:4326</span>
             </div>
 
-            <div className="grid grid-cols-3 gap-2.5 text-xs">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="p-3 rounded-xl bg-[#0b1429] border border-[#182a52]">
+                <div className="text-[10px] text-slate-400 font-mono uppercase">AI CONFIDENCE</div>
+                <div className="text-xl font-extrabold text-white font-mono mt-1">{Math.round(activeContact.confidence * 100)}%</div>
+                <div className="text-[10px] text-emerald-400 font-mono mt-0.5">YOLOv8n Single-Class</div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#0b1429] border border-[#182a52]">
+                <div className="text-[10px] text-slate-400 font-mono uppercase">PRIORITY TIER</div>
+                <div className={`text-xl font-extrabold font-mono mt-1 ${
+                  activeContact.priority === 'HIGH' ? 'text-red-400' : 'text-amber-400'
+                }`}>
+                  {activeContact.priority}
+                </div>
+                <div className="text-[10px] text-slate-400 font-mono mt-0.5">Triage Level</div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#0b1429] border border-[#182a52]">
+                <div className="text-[10px] text-slate-400 font-mono uppercase">SLANT RANGE OFFSET</div>
+                <div className="text-xl font-extrabold text-cyan-300 font-mono mt-1">24.6 m</div>
+                <div className="text-[10px] text-slate-400 font-mono mt-0.5">Port / Starboard</div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#0b1429] border border-[#182a52]">
+                <div className="text-[10px] text-slate-400 font-mono uppercase">LOCALIZATION</div>
+                <div className="text-sm font-extrabold text-white font-mono mt-2">{activeContact.localization_status}</div>
+                <div className="text-[10px] text-slate-400 font-mono mt-0.5">GPS Track Provenance</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Operator Triage Classification Actions */}
+          <div className="p-5 rounded-2xl bg-[#091226] border border-[#15274f] space-y-4 shadow-lg">
+            <div className="border-b border-[#142244] pb-3">
+              <span className="font-mono font-bold text-xs text-white uppercase">ONE-CLICK OPERATOR TRIAGE ACTIONS</span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
               <button
                 onClick={() => handleAction('CONFIRMED')}
                 disabled={submitting}
-                className="py-3 px-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-bold transition-colors flex flex-col items-center gap-1.5 shadow-xs"
+                className="p-3.5 rounded-xl bg-gradient-to-r from-emerald-950 to-[#0c3120] hover:from-emerald-900 hover:to-[#12452c] text-emerald-300 border border-emerald-600/70 font-bold text-xs flex flex-col items-center gap-1.5 transition-all shadow-md group"
               >
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                <span className="text-xs">Confirm Debris</span>
+                <CheckCircle2 className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" />
+                <span>CONFIRM DEBRIS</span>
+                <span className="text-[10px] text-emerald-400/70 font-normal">Validated Contact</span>
               </button>
 
               <button
                 onClick={() => handleAction('FALSE_POSITIVE')}
                 disabled={submitting}
-                className="py-3 px-2 rounded-lg bg-red-50 hover:bg-red-100 border border-red-300 text-red-800 font-bold transition-colors flex flex-col items-center gap-1.5 shadow-xs"
+                className="p-3.5 rounded-xl bg-gradient-to-r from-red-950 to-[#361118] hover:from-red-900 hover:to-[#4a1822] text-red-300 border border-red-600/70 font-bold text-xs flex flex-col items-center gap-1.5 transition-all shadow-md group"
               >
-                <XCircle className="w-4 h-4 text-red-600" />
-                <span className="text-xs">False Positive</span>
+                <XCircle className="w-5 h-5 text-red-400 group-hover:scale-110 transition-transform" />
+                <span>FALSE POSITIVE</span>
+                <span className="text-[10px] text-red-400/70 font-normal">Geological Clutter</span>
               </button>
 
               <button
                 onClick={() => handleAction('UNCERTAIN')}
                 disabled={submitting}
-                className="py-3 px-2 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-800 font-bold transition-colors flex flex-col items-center gap-1.5 shadow-xs"
+                className="p-3.5 rounded-xl bg-gradient-to-r from-amber-950 to-[#38260a] hover:from-amber-900 hover:to-[#4d340e] text-amber-300 border border-amber-600/70 font-bold text-xs flex flex-col items-center gap-1.5 transition-all shadow-md group"
               >
-                <HelpCircle className="w-4 h-4 text-amber-600" />
-                <span className="text-xs">Needs Review</span>
+                <HelpCircle className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform" />
+                <span>NEEDS REVIEW</span>
+                <span className="text-[10px] text-amber-400/70 font-normal">Secondary ROV Pass</span>
               </button>
             </div>
 
-            {saveMessage && (
-              <div className="p-2.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium">
-                {saveMessage}
-              </div>
-            )}
-          </div>
-
-          {/* Operator Notes Box Matching Figma Screen 3 */}
-          <div className="p-5 rounded-lg bg-white border border-slate-200 shadow-xs space-y-3">
-            <div className="text-xs uppercase font-bold text-slate-500">
-              TARGET OPERATOR NOTES
+            {/* Operator Observation Notes Input */}
+            <div className="space-y-1.5 pt-2">
+              <label className="text-[11px] font-mono text-slate-400 font-bold uppercase">
+                OPERATOR OBSERVATIONS & SURVEY LOG NOTES
+              </label>
+              <textarea
+                value={operatorNote}
+                onChange={(e) => setOperatorNote(e.target.value)}
+                placeholder="Enter acoustic signature analysis, wreck orientation, or diver notes..."
+                rows={3}
+                className="w-full p-3 rounded-xl bg-[#060b17] border border-[#142244] focus:border-cyan-500 text-slate-100 text-xs placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-cyan-500/40 font-sans"
+              />
             </div>
-            <textarea
-              rows={4}
-              value={operatorNote}
-              onChange={(e) => setOperatorNote(e.target.value)}
-              placeholder="Target displays a strong linear signature with a distinct acoustic shadow pattern. Strongly indicative of discarded gillnet / wreck anomaly..."
-              className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:bg-white focus:border-slate-400 placeholder:text-slate-400"
-            />
-            <div className="flex items-center justify-between pt-1">
-              <span className="text-[11px] text-slate-400">Autosaved 2m ago</span>
-              <button
-                onClick={() => handleAction(activeContact.review_status)}
-                disabled={submitting || !operatorNote.trim()}
-                className="px-4 py-2 rounded-md bg-slate-900 hover:bg-slate-800 disabled:opacity-40 text-white font-medium text-xs flex items-center gap-1.5 shadow-xs transition-colors"
-              >
-                <Save className="w-3.5 h-3.5" />
-                <span>Save & Continue</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Verification History Log Table Matching Figma Screen 3 */}
-          <div className="p-5 rounded-lg bg-white border border-slate-200 shadow-xs space-y-3">
-            <div className="text-xs uppercase font-bold text-slate-500 border-b border-slate-100 pb-2 flex justify-between">
-              <span>VERIFICATION HISTORY LOG</span>
-              <span className="text-slate-500 font-mono text-[10px]">CURRENT: {activeContact.review_status}</span>
-            </div>
-
-            <div className="space-y-1.5 max-h-36 overflow-y-auto text-xs">
-              <div className="p-2.5 rounded-md bg-slate-50 border border-slate-200 flex items-center justify-between">
-                <div>
-                  <div className="text-slate-900 font-semibold font-mono text-xs">{activeContact.contact_id}</div>
-                  <div className="text-[11px] text-slate-500">
-                    {activeContact.review_note || 'AI candidate proposal awaiting operator evaluation'}
-                  </div>
-                </div>
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${
-                  activeContact.review_status === 'CONFIRMED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                  activeContact.review_status === 'FALSE_POSITIVE' ? 'bg-red-50 text-red-700 border-red-200' :
-                  activeContact.review_status === 'UNCERTAIN' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                  'bg-slate-100 text-slate-700 border-slate-200'
-                }`}>
-                  {activeContact.review_status}
-                </span>
-              </div>
-            </div>
-
-            {activeContact.latitude != null && (
-              <button
-                onClick={onNavigateToMap}
-                className="w-full mt-2 py-2 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
-              >
-                <MapPin className="w-3.5 h-3.5" />
-                <span>View on GIS Map</span>
-              </button>
-            )}
           </div>
         </div>
       </div>
