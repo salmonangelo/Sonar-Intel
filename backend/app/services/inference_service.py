@@ -1,40 +1,47 @@
 """
 Inference Orchestration Service.
 
-Connects:
-Preprocessing -> YOLOv8n Candidate Detector -> Tile Deduplication ->
-Acoustic Context Analysis -> Geolocation -> Priority Scoring ->
-Canonical Contact Generation.
+Orchestrates the full end-to-end processing pipeline:
+SSS Input -> Data Quality -> DRISHTI Preprocessing -> DRISHTI Detector ->
+Tile Deduplication -> Acoustic Context Analysis -> Geolocation -> Priority Scoring ->
+Canonical Contact Transformation.
+
+Pluggable and configuration-driven.
 """
 
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import os
 import cv2
+import numpy as np
+
 from backend.app.schemas.contact import Contact, BoundingBox
-from ml.preprocessing.pipeline import SonarPreprocessingPipeline
-from ml.inference.detector import SonarDetector
+from backend.app.core.config import settings
+from ml.preprocessing.tiling import generate_tiles
+from ml.preprocessing.quality import compute_image_quality
+from ml.inference.drishti_detector import DrishtiDetector, DrishtiDetection
 from ml.inference.postprocess import deduplicate_detections
 from ml.inference.context import extract_acoustic_context
 from backend.app.services.scoring_service import calculate_contact_priority
 from backend.app.services.geolocation_service import GeolocationService
+from backend.app.services.transformer import transform_drishti_detections_to_contacts
 
 
 class InferenceService:
     def __init__(
         self,
-        model_path: str = "outputs/models/yolov8n_sonar_baseline/best.pt",
-        confidence_threshold: float = 0.25,
+        model_path: Optional[str] = None,
+        confidence_threshold: Optional[float] = None,
+        iou_threshold: Optional[float] = None,
         device: Optional[str] = None
     ):
-        import torch
-        if device is None:
-            device = "cuda:0" if torch.cuda.is_available() else "cpu"
-        self.detector = SonarDetector(
-            model_path=model_path,
-            confidence_threshold=confidence_threshold,
-            device=device
+        self.detector = DrishtiDetector(
+            model_path=model_path or settings.MODEL_PATH,
+            model_name=settings.MODEL_NAME,
+            model_version=settings.MODEL_VERSION,
+            confidence_threshold=confidence_threshold if confidence_threshold is not None else settings.CONFIDENCE_THRESHOLD,
+            iou_threshold=iou_threshold if iou_threshold is not None else settings.IOU_THRESHOLD,
+            device=device or settings.DEVICE
         )
-        self.pipeline = SonarPreprocessingPipeline(apply_clahe_enhancement=False)
 
     def run_survey_analysis(
         self,
@@ -44,110 +51,100 @@ class InferenceService:
         confidence_threshold: Optional[float] = None
     ) -> List[Contact]:
         """
-        Executes full 8-stage anomaly detection on a survey swath.
+        Executes the full anomaly detection pipeline on an SSS survey swath.
         Returns a list of Canonical Contact objects.
         """
         if confidence_threshold is not None:
             self.detector.confidence_threshold = confidence_threshold
 
-        # 1. Preprocess & Tile
-        prep_results = self.pipeline.run(raw_image_path)
-        processed_img = prep_results["processed_image"]
-        quality_score = prep_results["quality_metrics"]["quality_score"]
-        tiles = prep_results["tiles"]
-        img_h, img_w = prep_results["image_shape"]
+        if not os.path.exists(raw_image_path):
+            raise FileNotFoundError(f"Sonar image not found: {raw_image_path}")
 
-        # 2. Run Candidate Detection on all tiles
-        raw_candidates = self.detector.detect_all_tiles(tiles)
+        raw_image = cv2.imread(raw_image_path)
+        if raw_image is None:
+            raise ValueError(f"Failed to decode image file: {raw_image_path}")
 
-        # 3. Deduplicate detections across overlapping tiles
-        filtered_candidates = deduplicate_detections(raw_candidates, iou_threshold=0.35)
+        img_h, img_w = raw_image.shape[:2]
+
+        # 1. Compute Data Quality
+        quality_metrics = compute_image_quality(raw_image)
+        quality_score = quality_metrics.get("quality_score", 1.0)
+
+        # 2. Tiling for side-scan sonar waterfall swaths
+        # If image dimensions fit directly in 640x640, run directly
+        if img_w <= settings.IMAGE_SIZE and img_h <= settings.IMAGE_SIZE:
+            raw_detections = self.detector.predict(
+                image=raw_image,
+                tile_id=f"{survey_id}_FULL",
+                offset_x=0,
+                offset_y=0
+            )
+        else:
+            # Generate deterministic overlapping 640x640 tiles
+            tiles = generate_tiles(
+                raw_image,
+                tile_size=settings.IMAGE_SIZE,
+                overlap=0.20
+            )
+            raw_detections: List[DrishtiDetection] = []
+            for tile in tiles:
+                tile_img = tile.get("tile_image", tile.get("image"))
+                offset_x = tile.get("offset_x", tile.get("x_offset", 0))
+                offset_y = tile.get("offset_y", tile.get("y_offset", 0))
+                tile_dets = self.detector.predict(
+                    image=tile_img,
+                    tile_id=f"{survey_id}_T{tile['tile_id']:03d}",
+                    offset_x=offset_x,
+                    offset_y=offset_y
+                )
+                raw_detections.extend(tile_dets)
+
+        # 3. Deduplicate detections across overlapping tile boundaries
+        # Adapt to dict format for existing deduplicate_detections
+        det_dicts = [
+            {
+                "class_name": d.class_name,
+                "confidence": d.confidence,
+                "bbox": {"x1": d.bbox[0], "y1": d.bbox[1], "x2": d.bbox[2], "y2": d.bbox[3]},
+                "tile_id": d.tile_id,
+                "_original_obj": d
+            }
+            for d in raw_detections
+        ]
+        filtered_dicts = deduplicate_detections(det_dicts, iou_threshold=self.detector.iou_threshold)
+        deduped_detections = [item["_original_obj"] for item in filtered_dicts]
 
         # 4. Geolocation service initialization
         geo_service = GeolocationService(nav_file_path=nav_file_path)
 
-        # Collect and rank candidates by composite acoustic strength
-        raw_contact_items = []
-        for cand in filtered_candidates:
-            bbox_dict = cand["bbox"]
-
-            # Acoustic Context Extraction
-            context = extract_acoustic_context(
-                image=processed_img,
-                bbox=bbox_dict,
+        # 5. Acoustic context evaluator callback
+        def context_eval(bbox_coords: List[int]) -> Dict[str, float]:
+            return extract_acoustic_context(
+                image=raw_image,
+                bbox={"x1": bbox_coords[0], "y1": bbox_coords[1], "x2": bbox_coords[2], "y2": bbox_coords[3]},
                 nadir_x=img_w // 2
             )
 
-            # Geolocation Estimation
-            center_x = (bbox_dict["x1"] + bbox_dict["x2"]) // 2
-            center_y = (bbox_dict["y1"] + bbox_dict["y2"]) // 2
-            lat, lon, loc_status = geo_service.estimate_contact_location(
-                bbox_center_x=center_x,
-                bbox_center_y=center_y,
-                image_width=img_w,
-                image_height=img_h
-            )
+        # 6. Transform internal DrishtiDetection -> Canonical Contact schema
+        contacts = transform_drishti_detections_to_contacts(
+            detections=deduped_detections,
+            survey_id=survey_id,
+            data_quality=quality_score,
+            context_evaluator=context_eval,
+            geo_service=geo_service,
+            image_width=img_w,
+            image_height=img_h
+        )
 
-            # Priority Decision Scoring
-            priority_label, _ = calculate_contact_priority(
-                confidence=cand["confidence"],
-                context_score=context["context_score"],
-                data_quality=quality_score,
-                localization_status=loc_status
-            )
-
-            # Composite ranking score: confidence (0.50) + context (0.30) + shadow (0.20)
-            rank_score = (
-                cand["confidence"] * 0.50 +
-                context["context_score"] * 0.30 +
-                context["shadow_evidence"] * 0.20
-            )
-
-            raw_contact_items.append({
-                "cand": cand,
-                "context": context,
-                "lat": lat,
-                "lon": lon,
-                "loc_status": loc_status,
-                "priority_label": priority_label,
-                "rank_score": rank_score
-            })
-
-        # Sort descending: HIGH priority first, then composite rank score
+        # Sort descending: HIGH priority first, then confidence
         priority_rank = {"HIGH": 3, "MEDIUM": 2, "LOW": 1}
-        raw_contact_items.sort(
-            key=lambda item: (priority_rank.get(item["priority_label"], 1), item["rank_score"]),
+        contacts.sort(
+            key=lambda c: (priority_rank.get(c.priority, 1), c.confidence),
             reverse=True
         )
 
-        contacts: List[Contact] = []
-        for idx, item in enumerate(raw_contact_items):
-            contact_id = f"C{idx+1:03d}"
-            cand = item["cand"]
-            bbox_dict = cand["bbox"]
-            context = item["context"]
-
-            contacts.append(Contact(
-                contact_id=contact_id,
-                survey_id=survey_id,
-                class_name=cand.get("class_name", "artificial_anomaly"),
-                confidence=cand["confidence"],
-                bbox=BoundingBox(
-                    x1=bbox_dict["x1"],
-                    y1=bbox_dict["y1"],
-                    x2=bbox_dict["x2"],
-                    y2=bbox_dict["y2"]
-                ),
-                data_quality=quality_score,
-                shadow_evidence=context["shadow_evidence"],
-                context_score=context["context_score"],
-                priority=item["priority_label"],
-                latitude=item["lat"],
-                longitude=item["lon"],
-                localization_status=item["loc_status"],
-                review_status="AI_CANDIDATE",
-                review_note=None,
-                model_version=self.detector.model_version
-            ))
+        # Re-number sorted contacts C001, C002...
+        for idx, contact in enumerate(contacts):
+            contact.contact_id = f"C{idx+1:03d}"
 
         return contacts
