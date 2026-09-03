@@ -12,6 +12,14 @@
 
 ---
 
+## 🎥 Live User Flow & Interactive Session Tour
+
+Experience the complete end-to-end operator workflow across all 6 hydrographic workspaces — from swath ingestion and candidate proposals to human-in-the-loop triage, PostGIS nautical mapping, and RFC 7946 GeoJSON export:
+
+![SONAR-INTEL Interactive Session Tour](docs/screenshots/00_full_mvp_session_tour.webp)
+
+---
+
 ## 🏗️ End-to-End System Architecture
 
 The platform processes multi-gigabyte acoustic swaths through a deterministic, 10-stage edge intelligence pipeline connecting raw sonar ingestion to spatial PostGIS georeferencing and interactive nautical command consoles.
