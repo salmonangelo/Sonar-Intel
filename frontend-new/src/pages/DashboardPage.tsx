@@ -16,7 +16,8 @@ import {
   Waves,
   BarChart3,
   Anchor,
-  ChevronRight
+  ChevronRight,
+  Upload
 } from 'lucide-react';
 
 interface DashboardPageProps {
@@ -24,13 +25,15 @@ interface DashboardPageProps {
   contacts: Contact[];
   onSelectScreen: (screen: 'dashboard' | 'sonar-analysis' | 'contact-verification' | 'gis-mapping' | 'ai-pipeline' | 'reports') => void;
   onSelectContact: (contact: Contact) => void;
+  onCustomUploadClick?: () => void;
 }
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({
   survey,
   contacts,
   onSelectScreen,
-  onSelectContact
+  onSelectContact,
+  onCustomUploadClick
 }) => {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -96,6 +99,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-3 shrink-0">
+            {onCustomUploadClick && (
+              <button
+                onClick={onCustomUploadClick}
+                className="px-5 py-3.5 rounded-full bg-white hover:bg-slate-50 text-[#1f1f1f] border border-[#e6e6e6] font-semibold text-xs transition-all duration-200 shadow-tactile flex items-center gap-2 cursor-pointer"
+              >
+                <Upload className="w-4 h-4 text-[#8e8e93]" />
+                <span>Upload Swath</span>
+              </button>
+            )}
+
             <button
               onClick={() => onSelectScreen('sonar-analysis')}
               className="px-6 py-3.5 rounded-full bg-[#ff383c] hover:bg-[#dc143c] text-white font-semibold text-xs transition-all duration-200 shadow-tactile hover:scale-[1.02] active:scale-[0.98] flex items-center gap-2 cursor-pointer"

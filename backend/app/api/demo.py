@@ -32,7 +32,7 @@ DEMO_SAMPLES = {
         "description": "Held-out test set sonar swath containing prominent shipwreck hull with strong acoustic highlight and down-range shadow.",
         "category": "TRUE_POSITIVE_BENCHMARK",
         "image_path": "data/demo/sonar/viator_04_test_wreck.png",
-        "nav_path": None,
+        "nav_path": "data/demo/navigation/viator_04_nav.csv",
         "filename": "viator_04_test_wreck.png"
     },
     "artificial_reef_02": {
@@ -41,7 +41,7 @@ DEMO_SAMPLES = {
         "description": "Held-out test set sonar swath with geological ridges and reef structures demonstrating operator false-alarm rejection.",
         "category": "CLUTTER_TRIAGE_DEMO",
         "image_path": "data/demo/sonar/artificial_reef_02_test_clutter.png",
-        "nav_path": None,
+        "nav_path": "data/demo/navigation/artificial_reef_02_nav.csv",
         "filename": "artificial_reef_02_test_clutter.png"
     },
     "corsican_02": {
@@ -50,7 +50,7 @@ DEMO_SAMPLES = {
         "description": "Held-out test set sonar swath containing verified shipwreck target matching ground-truth YOLO annotation.",
         "category": "TRUE_POSITIVE_BENCHMARK",
         "image_path": "data/demo/sonar/corsican_02_test_wreck.png",
-        "nav_path": None,
+        "nav_path": "data/demo/navigation/corsican_02_nav.csv",
         "filename": "corsican_02_test_wreck.png"
     },
     "survey_001": {
@@ -94,7 +94,7 @@ def load_demo_sample(sample_id: str, db: Session = Depends(get_db)):
     if not os.path.exists(image_path):
         raise HTTPException(status_code=404, detail=f"Demo file '{image_path}' missing from disk.")
 
-    survey_id = f"DEMO_{sample_id.upper()}_{int(time.time())}"
+    survey_id = f"DEMO_{sample_id.upper()}_{int(time.time() * 1000)}"
     raw_dest = os.path.join(sonar_service.raw_dir, f"{survey_id}_{sample['filename']}")
     shutil.copyfile(image_path, raw_dest)
 

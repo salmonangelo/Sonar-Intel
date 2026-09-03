@@ -120,8 +120,8 @@ export const GisMappingPage: React.FC<GisMappingPageProps> = ({
           <div className="p-4 border-b border-[#e6e6e6] bg-[#fcfcfc] flex items-center justify-between text-xs font-sans">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-bold text-[#1f1f1f]">MapLibre GL Vector Nautical Chart</span>
-              <span className="text-[#8e8e93]">• Dark Bathymetric Tiles</span>
+              <span className="font-bold text-[#1f1f1f]">MapLibre GL Nautical GIS</span>
+              <span className="text-[#8e8e93]">• Bathymetric Ocean Contours & PostGIS Trajectory</span>
             </div>
             <span className="text-xs font-bold px-3 py-1 rounded-full bg-white border border-[#e6e6e6] text-[#8e8e93]">
               Datum: WGS-84 (EPSG:4326)
