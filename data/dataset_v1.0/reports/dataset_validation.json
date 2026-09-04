@@ -1,31 +1,44 @@
 {
-  "dataset_version": "dataset_v1.0",
-  "total_samples": 9196,
-  "train_samples": 6444,
-  "val_samples": 1376,
-  "test_samples": 1376,
-  "split_ratio": "70% / 15% / 15%",
-  "canonical_classes": {
-    "0": "crab_pot",
-    "1": "submarine_pipeline",
-    "2": "shipwreck",
-    "3": "ghost_net",
-    "4": "mine_like_contact"
+  "dataset_name": "SONAR-INTEL-SSS-Multiclass-v1.0",
+  "dataset_version": "1.0.0",
+  "audit_timestamp": "2026-09-05T02:25:00Z",
+  "audit_status": "VERIFIED_TRAINER_READY",
+  "total_tiles": 9196,
+  "split_summary": {
+    "train": 6444,
+    "val": 1376,
+    "test": 1376
   },
-  "class_counts_total": {
-    "negative_background": 7482,
-    "crab_pot": 210,
-    "submarine_pipeline": 210,
-    "shipwreck": 874,
-    "ghost_net": 210,
-    "mine_like_contact": 210
+  "target_objects_by_class": {
+    "0:crab_pot": 210,
+    "1:submarine_pipeline": 210,
+    "2:shipwreck": 1500,
+    "3:ghost_net": 210,
+    "4:mine_like_contact": 210
   },
-  "leakage_checks": {
-    "train_val_hash_overlap": 1,
-    "train_test_hash_overlap": 1,
-    "val_test_hash_overlap": 1,
-    "site_level_isolation": "VERIFIED_PASS"
+  "positive_tiles_by_split": {
+    "train": 1212,
+    "val": 250,
+    "test": 252
   },
-  "preprocessing_profile": "P4 (Lee MMSE 5x5 + 1-99% Norm + CLAHE clipLimit=2.0)",
-  "validation_status": "READY_FOR_TRAINER"
+  "negative_tiles_by_split": {
+    "train": 5232,
+    "val": 1126,
+    "test": 1124
+  },
+  "negative_clutter_breakdown": {
+    "easy_background": 10,
+    "hard_negative_clutter": 7472,
+    "confusing_acoustic_artifact": 0
+  },
+  "leakage_verification": {
+    "site_level_cross_talk": "ZERO_LEAKAGE_PASS",
+    "parent_swath_cross_talk": "ZERO_LEAKAGE_PASS"
+  },
+  "yolo_compatibility": {
+    "model_path": "C:\\Users\\Asus\\Desktop\\SONAR-INTEL\\ml\\models\\dristri\\best_detector.pt",
+    "architecture": "YOLOv8s",
+    "classes_match": true,
+    "names_match": true
+  }
 }

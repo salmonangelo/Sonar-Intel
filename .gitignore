@@ -52,6 +52,10 @@ data/interim/*
 !data/interim/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+data/dataset_v1.0/images/*
+!data/dataset_v1.0/images/.gitkeep
+data/dataset_v1.0/labels/*
+!data/dataset_v1.0/labels/.gitkeep
 scratch/
 outputs/training/*
 outputs/annotation_samples/*

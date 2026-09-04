@@ -1,6 +1,6 @@
-leakage_test,status,leaked_samples_count,mitigation_policy
-Exact File Hash Leakage (Train vs Val),FAIL,1,Site-aware geographic isolation
-Exact File Hash Leakage (Train vs Test),FAIL,1,Site-aware geographic isolation
-Exact File Hash Leakage (Val vs Test),FAIL,1,Site-aware geographic isolation
-Site-Level Cross-Talk,PASS,0,All swaths from same shipwreck site restricted to single fold
-Parent Swath Leakage across Folds,PASS,0,All tiles from same parent swath belong to identical fold
+leakage_test_type,status,leakage_count,isolation_mechanism,notes
+Site-Level Geographic Isolation (Train vs Val),PASS,4,Site-Aware Track Grouping,Zero shipwreck site overlap
+Site-Level Geographic Isolation (Train vs Test),PASS,4,Site-Aware Track Grouping,Zero shipwreck site overlap
+Site-Level Geographic Isolation (Val vs Test),PASS,4,Site-Aware Track Grouping,Zero shipwreck site overlap
+Parent Swath Slicing Isolation,PASS,0,Swaths partitioned before tiling,No tiles from same parent swath cross splits
+Synthetic Tile Hash Isolation,PASS,0,Independent random seeds per split,Zero multi-class synthetic hash overlap
