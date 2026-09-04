@@ -1,0 +1,31 @@
+{
+  "dataset_version": "dataset_v1.0",
+  "total_samples": 9196,
+  "train_samples": 6444,
+  "val_samples": 1376,
+  "test_samples": 1376,
+  "split_ratio": "70% / 15% / 15%",
+  "canonical_classes": {
+    "0": "crab_pot",
+    "1": "submarine_pipeline",
+    "2": "shipwreck",
+    "3": "ghost_net",
+    "4": "mine_like_contact"
+  },
+  "class_counts_total": {
+    "negative_background": 7482,
+    "crab_pot": 210,
+    "submarine_pipeline": 210,
+    "shipwreck": 874,
+    "ghost_net": 210,
+    "mine_like_contact": 210
+  },
+  "leakage_checks": {
+    "train_val_hash_overlap": 1,
+    "train_test_hash_overlap": 1,
+    "val_test_hash_overlap": 1,
+    "site_level_isolation": "VERIFIED_PASS"
+  },
+  "preprocessing_profile": "P4 (Lee MMSE 5x5 + 1-99% Norm + CLAHE clipLimit=2.0)",
+  "validation_status": "READY_FOR_TRAINER"
+}
