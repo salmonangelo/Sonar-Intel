@@ -1,0 +1,7 @@
+# SONAR-INTEL Local/Edge Development Dependencies
+-r requirements.txt
+torch>=2.2.0
+torchvision>=0.17.0
+ultralytics>=8.1.0
+gradio_client>=1.0.0
+pytest>=8.0.0

@@ -18,10 +18,11 @@ class Settings:
     # ------------------------------------------------------------------
     MODEL_PATH: str = os.getenv(
         "MODEL_PATH",
-        os.path.join("ml", "models", "dristri", "best_detector.pt")
+        os.path.join("ml", "models", "best_detector.onnx")
     )
-    MODEL_NAME: str = os.getenv("MODEL_NAME", "DRISHTI-YOLOv8s")
-    MODEL_VERSION: str = os.getenv("MODEL_VERSION", "baseline-v1")
+    MODEL_FORMAT: str = os.getenv("MODEL_FORMAT", "onnx")
+    MODEL_NAME: str = os.getenv("MODEL_NAME", "DRISHTI-YOLOv8s-ONNX")
+    MODEL_VERSION: str = os.getenv("MODEL_VERSION", "onnx-fp32-v1")
     MODEL_SHA256: str = os.getenv(
         "MODEL_SHA256",
         "2f55eec5d8fe6b4737706392e259c02660a8542cddbcbd603f96d606c54cb927"
@@ -32,9 +33,9 @@ class Settings:
     )
 
     # ------------------------------------------------------------------
-    # Hugging Face & Remote Provider Integration
+    # Inference Provider Integration (Render Default: onnx)
     # ------------------------------------------------------------------
-    INFERENCE_PROVIDER: str = os.getenv("INFERENCE_PROVIDER", "local")
+    INFERENCE_PROVIDER: str = os.getenv("INFERENCE_PROVIDER", "onnx")
     HF_SPACE: str = os.getenv("HF_SPACE", "SalmonAngelo/Sonar-Intel")
     HF_MODEL_ID: str = os.getenv("HF_MODEL_ID", "Samyukta31/sonar_yolo")
     HF_MODEL_FILE: str = os.getenv("HF_MODEL_FILE", "best_distilled_yolo11n.pt")
@@ -44,9 +45,9 @@ class Settings:
     # Inference Hyperparameters
     # ------------------------------------------------------------------
     IMAGE_SIZE: int = int(os.getenv("IMAGE_SIZE", "640"))
-    CONFIDENCE_THRESHOLD: float = float(os.getenv("CONFIDENCE_THRESHOLD", "0.25"))
+    CONFIDENCE_THRESHOLD: float = float(os.getenv("CONFIDENCE_THRESHOLD", "0.10"))
     IOU_THRESHOLD: float = float(os.getenv("IOU_THRESHOLD", "0.45"))
-    DEVICE: str = os.getenv("DEVICE", "")  # Empty string triggers auto CUDA/CPU detection
+    DEVICE: str = os.getenv("DEVICE", "cpu")  # CPU execution for Render 512MB RAM constraint
 
     # ------------------------------------------------------------------
     # Preprocessing Configurations (DRISHTI Specification)

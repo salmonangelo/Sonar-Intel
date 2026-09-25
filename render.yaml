@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: sonar-intel-backend
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: INFERENCE_PROVIDER
+        value: onnx
+      - key: MODEL_PATH
+        value: ml/models/best_detector.onnx
+      - key: MODEL_FORMAT
+        value: onnx
+      - key: CONFIDENCE_THRESHOLD
+        value: "0.10"
+      - key: IOU_THRESHOLD
+        value: "0.45"
+      - key: DEVICE
+        value: cpu
+      - key: PREPROCESSING_SPECKLE_FILTER
+        value: lee
+      - key: PREPROCESSING_CLAHE
+        value: "true"

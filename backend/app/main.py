@@ -62,13 +62,30 @@ os.makedirs("data/processed", exist_ok=True)
 os.makedirs("data/demo", exist_ok=True)
 
 
+@app.get("/health", tags=["System"])
 @app.get("/api/health", tags=["System"])
 def health_check():
-    """Operational health probe."""
+    """Operational health and detector probe for Render / Vercel integration."""
+    try:
+        from ml.inference.onnx_detector import ONNXDetector
+        detector = ONNXDetector()
+        detector_info = detector.get_health_status()
+    except Exception as e:
+        detector_info = {
+            "provider": "onnx",
+            "status": "error",
+            "error": str(e)
+        }
+
     return {
-        "status": "healthy",
+        "status": "healthy" if detector_info.get("status") == "ready" else "degraded",
         "service": "SONAR-INTEL API",
+        "provider": detector_info.get("provider", "onnx"),
+        "model": detector_info.get("model", "best_detector.onnx"),
+        "runtime": detector_info.get("runtime", "onnxruntime"),
+        "device": detector_info.get("device", "CPU"),
         "database": "active",
+        "detector": detector_info,
         "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()
     }
 
