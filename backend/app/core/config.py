@@ -9,6 +9,9 @@ import os
 from typing import List, Tuple
 
 
+from dotenv import load_dotenv
+load_dotenv()
+
 class Settings:
     # ------------------------------------------------------------------
     # Model Provenance & Artifacts
@@ -27,6 +30,15 @@ class Settings:
         "MODEL_SOURCE",
         "https://huggingface.co/rehan9599/drishti-detector"
     )
+
+    # ------------------------------------------------------------------
+    # Hugging Face & Remote Provider Integration
+    # ------------------------------------------------------------------
+    INFERENCE_PROVIDER: str = os.getenv("INFERENCE_PROVIDER", "local")
+    HF_SPACE: str = os.getenv("HF_SPACE", "SalmonAngelo/Sonar-Intel")
+    HF_MODEL_ID: str = os.getenv("HF_MODEL_ID", "Samyukta31/sonar_yolo")
+    HF_MODEL_FILE: str = os.getenv("HF_MODEL_FILE", "best_distilled_yolo11n.pt")
+    HF_TOKEN: str = os.getenv("HF_TOKEN", "")
 
     # ------------------------------------------------------------------
     # Inference Hyperparameters
@@ -66,3 +78,4 @@ class Settings:
 
 
 settings = Settings()
+

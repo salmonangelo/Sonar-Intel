@@ -48,6 +48,41 @@ class DrishtiDetector:
     """
     _model_cache: Dict[str, Any] = {}
 
+    def _resolve_model_path(self, raw_path: str) -> str:
+        """Resolves model path locally or via Hugging Face hub."""
+        if os.path.exists(raw_path):
+            return raw_path
+
+        # If model path does not exist, try downloading from Hugging Face if configured
+        if settings.HF_MODEL_ID and settings.HF_MODEL_FILE:
+            try:
+                print(f"[DrishtiDetector] Attempting download of {settings.HF_MODEL_FILE} from HF repo {settings.HF_MODEL_ID}...")
+                from huggingface_hub import hf_hub_download
+                token = settings.HF_TOKEN if settings.HF_TOKEN else None
+                downloaded_file = hf_hub_download(
+                    repo_id=settings.HF_MODEL_ID,
+                    filename=settings.HF_MODEL_FILE,
+                    token=token
+                )
+                if downloaded_file and os.path.exists(downloaded_file):
+                    print(f"[DrishtiDetector] Successfully retrieved model from HF: {downloaded_file}")
+                    return downloaded_file
+            except Exception as hf_err:
+                print(f"[DrishtiDetector] HF download notice ({hf_err}). Checking local fallback paths...")
+
+        # If still not found, check known local model fallbacks
+        fallback_candidates = [
+            os.path.join("ml", "models", "dristri", "best_detector.pt"),
+            os.path.join("ml", "models", "best_distilled_yolo11n.pt"),
+            os.path.join("backend", "ml", "models", "dristri", "best_detector.pt")
+        ]
+        for candidate in fallback_candidates:
+            if os.path.exists(candidate):
+                print(f"[DrishtiDetector] Using fallback checkpoint at: {candidate}")
+                return candidate
+
+        return raw_path
+
     def __init__(
         self,
         model_path: Optional[str] = None,
@@ -59,7 +94,8 @@ class DrishtiDetector:
         device: Optional[str] = None,
         filtered_classes: Optional[List[str]] = None
     ):
-        self.model_path = model_path or settings.MODEL_PATH
+        raw_path = model_path or settings.MODEL_PATH
+        self.model_path = self._resolve_model_path(raw_path)
         self.model_name = model_name or settings.MODEL_NAME
         self.model_version = model_version or settings.MODEL_VERSION
         self.confidence_threshold = confidence_threshold if confidence_threshold is not None else settings.CONFIDENCE_THRESHOLD
@@ -84,14 +120,15 @@ class DrishtiDetector:
         })
 
     def _get_or_load_model(self):
-        """Loads and caches the YOLOv8s model once per process."""
+        """Loads and caches the YOLOv8s/YOLO11n model once per process."""
         cache_key = f"{self.model_path}_{self.device}"
         if cache_key in DrishtiDetector._model_cache:
             return DrishtiDetector._model_cache[cache_key]
 
         from ultralytics import YOLO
+
         if not os.path.exists(self.model_path):
-            raise FileNotFoundError(f"DRISHTI model checkpoint not found at: {self.model_path}")
+            raise FileNotFoundError(f"Sonar AI model checkpoint not found at: {self.model_path}")
 
         print(f"[DrishtiDetector] Loading model from {self.model_path} onto {self.device}...")
         model = YOLO(self.model_path)
