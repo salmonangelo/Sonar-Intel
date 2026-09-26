@@ -457,215 +457,222 @@ export const SonarAnalysisPage: React.FC<SonarAnalysisPageProps> = ({
                   <span>STARBOARD SWATH (75m) ►</span>
                 </div>
 
-                <img
-                  ref={imgRef}
-                  src={viewMode === 'processed' ? survey.processed_image_url : survey.raw_image_url}
-                  alt="Side-Scan Sonar Waterfall"
-                  onLoad={updateScaling}
-                  style={{
-                    filter: `contrast(${contrast}%)`,
-                    maxHeight: '100%',
-                    display: 'block'
-                  }}
-                  className="transition-all select-none"
-                />
+                <div className="relative inline-block w-full">
+                  <img
+                    ref={imgRef}
+                    src={viewMode === 'processed' ? survey.processed_image_url : survey.raw_image_url}
+                    alt="Side-Scan Sonar Waterfall"
+                    onLoad={updateScaling}
+                    style={{
+                      filter: `contrast(${contrast}%)`,
+                      maxHeight: '100%',
+                      display: 'block'
+                    }}
+                    className="transition-all select-none w-full"
+                  />
 
-                {/* SVG Overlay for Bottom Line & Measurement Visuals */}
-                <svg
-                  className="absolute inset-0 w-full pointer-events-none"
-                  style={{
-                    top: '20px',
-                    height: 'calc(100% - 20px)',
-                    width: '100%'
-                  }}
-                >
-                  {/* 2. Seafloor Bottom Track Line Overlay */}
-                  {showBottomTrack && (
-                    <g>
-                      <line
-                        x1={0}
-                        y1={(imgRef.current?.clientHeight || 450) * 0.45}
-                        x2={imgRef.current?.clientWidth || 650}
-                        y2={(imgRef.current?.clientHeight || 450) * 0.45}
-                        stroke="#00B4D8"
-                        strokeWidth="2"
-                        strokeOpacity="0.7"
-                        strokeDasharray="6 4"
-                      />
-                      <rect
-                        x={(imgRef.current?.clientWidth || 650) - 95}
-                        y={(imgRef.current?.clientHeight || 450) * 0.45 - 18}
-                        width="90"
-                        height="16"
-                        rx="4"
-                        fill="#0f172a"
-                        fillOpacity="0.85"
-                        stroke="#00B4D8"
-                        strokeWidth="1"
-                        strokeOpacity="0.7"
-                      />
-                      <text
-                        x={(imgRef.current?.clientWidth || 650) - 50}
-                        y={(imgRef.current?.clientHeight || 450) * 0.45 - 6}
-                        textAnchor="middle"
-                        fill="#00B4D8"
-                        fontSize="10"
-                        fontFamily="'JetBrains Mono', monospace"
-                        fontWeight="bold"
-                        opacity="0.95"
-                      >
-                        Bottom Track
-                      </text>
-                    </g>
-                  )}
+                  {/* SVG Overlay for Conveyor Scan Line & Measurement Visuals */}
+                  <svg
+                    className="absolute inset-0 w-full h-full pointer-events-none"
+                  >
+                    {/* Seafloor Conveyor / Scan Line Overlay (Directly aligned with candidates) */}
+                    {showBottomTrack && (
+                      <g>
+                        {(() => {
+                          const targetY = activeContact
+                            ? ((activeContact.bbox.y1 + activeContact.bbox.y2) / 2) * scale.scaleY
+                            : (imgRef.current?.clientHeight || 450) * 0.495;
+                          const renderW = imgRef.current?.clientWidth || 650;
+                          return (
+                            <>
+                              <line
+                                x1={0}
+                                y1={targetY}
+                                x2={renderW}
+                                y2={targetY}
+                                stroke="#00B4D8"
+                                strokeWidth="2"
+                                strokeOpacity="0.85"
+                                strokeDasharray="6 4"
+                              />
+                              <rect
+                                x={renderW - 145}
+                                y={targetY - 18}
+                                width="140"
+                                height="16"
+                                rx="4"
+                                fill="#0f172a"
+                                fillOpacity="0.9"
+                                stroke="#00B4D8"
+                                strokeWidth="1"
+                                strokeOpacity="0.8"
+                              />
+                              <text
+                                x={renderW - 75}
+                                y={targetY - 6}
+                                textAnchor="middle"
+                                fill="#00B4D8"
+                                fontSize="10"
+                                fontFamily="'JetBrains Mono', monospace"
+                                fontWeight="bold"
+                                opacity="0.95"
+                              >
+                                Conveyor Scan Line
+                              </text>
+                            </>
+                          );
+                        })()}
+                      </g>
+                    )}
 
-                  {/* Measurement Tool Drawings */}
-                  {activeTool === 'length' && measurePoints.length > 0 && (
-                    <g>
-                      {measurePoints.map((p, idx) => (
-                        <circle key={idx} cx={p.x} cy={p.y} r="4" fill="#00B4D8" stroke="#ffffff" strokeWidth="1.5" />
-                      ))}
-                      {measurePoints.length === 2 && (
-                        <>
-                          <line
-                            x1={measurePoints[0].x}
-                            y1={measurePoints[0].y}
-                            x2={measurePoints[1].x}
-                            y2={measurePoints[1].y}
+                    {/* Measurement Tool Drawings */}
+                    {activeTool === 'length' && measurePoints.length > 0 && (
+                      <g>
+                        {measurePoints.map((p, idx) => (
+                          <circle key={idx} cx={p.x} cy={p.y} r="4" fill="#00B4D8" stroke="#ffffff" strokeWidth="1.5" />
+                        ))}
+                        {measurePoints.length === 2 && (
+                          <>
+                            <line
+                              x1={measurePoints[0].x}
+                              y1={measurePoints[0].y}
+                              x2={measurePoints[1].x}
+                              y2={measurePoints[1].y}
+                              stroke="#00B4D8"
+                              strokeWidth="2.5"
+                              strokeDasharray="4 2"
+                            />
+                            <rect
+                              x={(measurePoints[0].x + measurePoints[1].x) / 2 - 40}
+                              y={(measurePoints[0].y + measurePoints[1].y) / 2 - 18}
+                              width="80"
+                              height="18"
+                              rx="4"
+                              fill="#0f172a"
+                              fillOpacity="0.9"
+                              stroke="#00B4D8"
+                              strokeWidth="1"
+                            />
+                            <text
+                              x={(measurePoints[0].x + measurePoints[1].x) / 2}
+                              y={(measurePoints[0].y + measurePoints[1].y) / 2 - 5}
+                              textAnchor="middle"
+                              fill="#00B4D8"
+                              fontSize="10"
+                              fontWeight="bold"
+                              fontFamily="'JetBrains Mono', monospace"
+                            >
+                              {(Math.hypot(measurePoints[1].x - measurePoints[0].x, measurePoints[1].y - measurePoints[0].y) * 0.15 / (scale.scaleX || 1)).toFixed(2)}m
+                            </text>
+                          </>
+                        )}
+                      </g>
+                    )}
+
+                    {activeTool === 'area' && measurePoints.length > 0 && (
+                      <g>
+                        {measurePoints.map((p, idx) => (
+                          <circle key={idx} cx={p.x} cy={p.y} r="4" fill="#00B4D8" stroke="#ffffff" strokeWidth="1.5" />
+                        ))}
+                        {measurePoints.length >= 2 && (
+                          <polygon
+                            points={measurePoints.map(p => `${p.x},${p.y}`).join(' ')}
+                            fill="rgba(0, 180, 216, 0.25)"
                             stroke="#00B4D8"
+                            strokeWidth="2"
+                            strokeDasharray="4 2"
+                          />
+                        )}
+                      </g>
+                    )}
+
+                    {activeTool === 'height' && measurePoints.length > 0 && (
+                      <g>
+                        {measurePoints.map((p, idx) => (
+                          <g key={idx}>
+                            <circle cx={p.x} cy={p.y} r="4" fill={idx === 0 ? '#10b981' : idx === 1 ? '#ef4444' : '#f59e0b'} stroke="#ffffff" strokeWidth="1.5" />
+                            <text x={p.x + 6} y={p.y + 3} fill="#ffffff" fontSize="9" fontWeight="bold" fontFamily="'JetBrains Mono', monospace">
+                              {idx === 0 ? 'P1:Bed' : idx === 1 ? 'P2:Apex' : 'P3:Shadow'}
+                            </text>
+                          </g>
+                        ))}
+                        {measurePoints.length === 3 && (
+                          <line
+                            x1={measurePoints[1].x}
+                            y1={measurePoints[1].y}
+                            x2={measurePoints[2].x}
+                            y2={measurePoints[2].y}
+                            stroke="#f59e0b"
                             strokeWidth="2.5"
                             strokeDasharray="4 2"
                           />
-                          <rect
-                            x={(measurePoints[0].x + measurePoints[1].x) / 2 - 40}
-                            y={(measurePoints[0].y + measurePoints[1].y) / 2 - 18}
-                            width="80"
-                            height="18"
-                            rx="4"
-                            fill="#0f172a"
-                            fillOpacity="0.9"
-                            stroke="#00B4D8"
-                            strokeWidth="1"
-                          />
-                          <text
-                            x={(measurePoints[0].x + measurePoints[1].x) / 2}
-                            y={(measurePoints[0].y + measurePoints[1].y) / 2 - 5}
-                            textAnchor="middle"
-                            fill="#00B4D8"
-                            fontSize="10"
-                            fontWeight="bold"
-                            fontFamily="'JetBrains Mono', monospace"
-                          >
-                            {(Math.hypot(measurePoints[1].x - measurePoints[0].x, measurePoints[1].y - measurePoints[0].y) * 0.15 / (scale.scaleX || 1)).toFixed(2)}m
-                          </text>
-                        </>
-                      )}
-                    </g>
-                  )}
+                        )}
+                      </g>
+                    )}
+                  </svg>
 
-                  {activeTool === 'area' && measurePoints.length > 0 && (
-                    <g>
-                      {measurePoints.map((p, idx) => (
-                        <circle key={idx} cx={p.x} cy={p.y} r="4" fill="#00B4D8" stroke="#ffffff" strokeWidth="1.5" />
-                      ))}
-                      {measurePoints.length >= 2 && (
-                        <polygon
-                          points={measurePoints.map(p => `${p.x},${p.y}`).join(' ')}
-                          fill="rgba(0, 180, 216, 0.25)"
-                          stroke="#00B4D8"
-                          strokeWidth="2"
-                          strokeDasharray="4 2"
-                        />
-                      )}
-                    </g>
-                  )}
+                  {/* Tactical Bounding Box Candidate Overlays */}
+                  {showBoxes && displayedContacts.map((c) => {
+                    const isSelected = selectedContact?.contact_id === c.contact_id || activeContact?.contact_id === c.contact_id;
+                    const left = c.bbox.x1 * scale.scaleX;
+                    const top = c.bbox.y1 * scale.scaleY;
+                    const width = (c.bbox.x2 - c.bbox.x1) * scale.scaleX;
+                    const height = (c.bbox.y2 - c.bbox.y1) * scale.scaleY;
 
-                  {activeTool === 'height' && measurePoints.length > 0 && (
-                    <g>
-                      {measurePoints.map((p, idx) => (
-                        <g key={idx}>
-                          <circle cx={p.x} cy={p.y} r="4" fill={idx === 0 ? '#10b981' : idx === 1 ? '#ef4444' : '#f59e0b'} stroke="#ffffff" strokeWidth="1.5" />
-                          <text x={p.x + 6} y={p.y + 3} fill="#ffffff" fontSize="9" fontWeight="bold" fontFamily="'JetBrains Mono', monospace">
-                            {idx === 0 ? 'P1:Bed' : idx === 1 ? 'P2:Apex' : 'P3:Shadow'}
-                          </text>
-                        </g>
-                      ))}
-                      {measurePoints.length === 3 && (
-                        <line
-                          x1={measurePoints[1].x}
-                          y1={measurePoints[1].y}
-                          x2={measurePoints[2].x}
-                          y2={measurePoints[2].y}
-                          stroke="#f59e0b"
-                          strokeWidth="2.5"
-                          strokeDasharray="4 2"
-                        />
-                      )}
-                    </g>
-                  )}
-                </svg>
+                    let strokeColor = '#10b981';
+                    let tagBg = '#10b981';
+                    if (c.priority === 'HIGH') {
+                      strokeColor = '#ef4444';
+                      tagBg = '#ef4444';
+                    } else if (c.priority === 'MEDIUM') {
+                      strokeColor = '#f59e0b';
+                      tagBg = '#f59e0b';
+                    }
 
-                {/* Tactical Bounding Box Candidate Overlays */}
-                {showBoxes && displayedContacts.map((c) => {
-                  const isSelected = selectedContact?.contact_id === c.contact_id || activeContact?.contact_id === c.contact_id;
-                  const left = c.bbox.x1 * scale.scaleX;
-                  const top = c.bbox.y1 * scale.scaleY;
-                  const width = (c.bbox.x2 - c.bbox.x1) * scale.scaleX;
-                  const height = (c.bbox.y2 - c.bbox.y1) * scale.scaleY;
-
-                  let strokeColor = '#10b981';
-                  let tagBg = '#10b981';
-                  if (c.priority === 'HIGH') {
-                    strokeColor = '#ef4444';
-                    tagBg = '#ef4444';
-                  } else if (c.priority === 'MEDIUM') {
-                    strokeColor = '#f59e0b';
-                    tagBg = '#f59e0b';
-                  }
-
-                  return (
-                    <div
-                      key={c.contact_id}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectContact(c);
-                      }}
-                      title="Click to verify"
-                      style={{
-                        position: 'absolute',
-                        left: `${left}px`,
-                        top: `${top + 20}px`,
-                        width: `${Math.max(16, width)}px`,
-                        height: `${Math.max(16, height)}px`,
-                        borderColor: strokeColor,
-                      }}
-                      className={`cursor-pointer border transition-all group ${
-                        isSelected 
-                          ? 'border-2 ring-2 ring-blue-400 bg-blue-500/20 z-20 scale-[1.02]' 
-                          : 'opacity-90 hover:opacity-100 hover:scale-105 z-10 hover:border-white'
-                      }`}
-                    >
-                      {/* Corner Targeting Marks */}
-                      <div className="absolute -top-1 -left-1 w-1.5 h-1.5 border-t border-l border-white" />
-                      <div className="absolute -top-1 -right-1 w-1.5 h-1.5 border-t border-r border-white" />
-                      <div className="absolute -bottom-1 -left-1 w-1.5 h-1.5 border-b border-l border-white" />
-                      <div className="absolute -bottom-1 -right-1 w-1.5 h-1.5 border-b border-r border-white" />
-
-                      {/* Pill Badge */}
-                      <div 
-                        style={{ backgroundColor: tagBg }}
-                        className="absolute -bottom-5 left-0 px-1.5 py-0.5 rounded-full font-mono font-bold text-[9px] text-white whitespace-nowrap shadow-md"
+                    return (
+                      <div
+                        key={c.contact_id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectContact(c);
+                        }}
+                        title="Click to verify"
+                        style={{
+                          position: 'absolute',
+                          left: `${left}px`,
+                          top: `${top}px`,
+                          width: `${Math.max(16, width)}px`,
+                          height: `${Math.max(16, height)}px`,
+                          borderColor: strokeColor,
+                        }}
+                        className={`cursor-pointer border transition-all group ${
+                          isSelected 
+                            ? 'border-2 ring-2 ring-blue-400 bg-blue-500/20 z-20 scale-[1.02]' 
+                            : 'opacity-90 hover:opacity-100 hover:scale-105 z-10 hover:border-white'
+                        }`}
                       >
-                        {c.contact_id} • {Math.round(c.confidence * 100)}%
-                      </div>
+                        {/* Corner Targeting Marks */}
+                        <div className="absolute -top-1 -left-1 w-1.5 h-1.5 border-t border-l border-white" />
+                        <div className="absolute -top-1 -right-1 w-1.5 h-1.5 border-t border-r border-white" />
+                        <div className="absolute -bottom-1 -left-1 w-1.5 h-1.5 border-b border-l border-white" />
+                        <div className="absolute -bottom-1 -right-1 w-1.5 h-1.5 border-b border-r border-white" />
 
-                      {/* Tooltip on hover */}
-                      <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md bg-slate-900/90 text-white text-[10px] font-sans whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30 shadow-md border border-slate-700">
-                        Click to verify
+                        {/* Pill Badge */}
+                        <div 
+                          style={{ backgroundColor: tagBg }}
+                          className="absolute -bottom-5 left-0 px-1.5 py-0.5 rounded-full font-mono font-bold text-[9px] text-white whitespace-nowrap shadow-md"
+                        >
+                          {c.contact_id} • {Math.round(c.confidence * 100)}%
+                        </div>
+
+                        {/* Tooltip on hover */}
+                        <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md bg-slate-900/90 text-white text-[10px] font-sans whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30 shadow-md border border-slate-700">
+                          Click to verify
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-xs text-slate-400 font-mono text-center py-24">
