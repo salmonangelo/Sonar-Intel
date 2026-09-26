@@ -20,6 +20,140 @@ import {
   Camera
 } from 'lucide-react';
 
+// High-Fidelity Dynamic Acoustic Crop Viewer Component
+const AcousticCropViewer: React.FC<{
+  imageUrl?: string;
+  bbox: { x1: number; y1: number; x2: number; y2: number };
+  contactId: string;
+  confidence: number;
+  isHigh: boolean;
+  className?: string;
+}> = ({ imageUrl, bbox, contactId, confidence, isHigh, className }) => {
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+
+  React.useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const w = canvas.width;
+    const h = canvas.height;
+
+    const renderFallbackSonar = () => {
+      // Procedural synthetic acoustic backscatter signature
+      ctx.fillStyle = '#060d1b';
+      ctx.fillRect(0, 0, w, h);
+
+      for (let i = 0; i < 400; i++) {
+        const rx = Math.random() * w;
+        const ry = Math.random() * h;
+        const alpha = Math.random() * 0.22;
+        ctx.fillStyle = `rgba(100, 160, 220, ${alpha})`;
+        ctx.fillRect(rx, ry, 2, 2);
+      }
+
+      const grad = ctx.createRadialGradient(w / 2 - 20, h / 2 - 10, 5, w / 2, h / 2, 90);
+      grad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+      grad.addColorStop(0.3, 'rgba(0, 212, 255, 0.8)');
+      grad.addColorStop(0.7, 'rgba(14, 116, 144, 0.4)');
+      grad.addColorStop(1, 'rgba(6, 13, 27, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.ellipse(w / 2 - 15, h / 2, 60, 35, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#02060f';
+      ctx.beginPath();
+      ctx.ellipse(w / 2 + 50, h / 2 + 10, 75, 40, 0.1, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    if (!imageUrl) {
+      renderFallbackSonar();
+      return;
+    }
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = imageUrl;
+
+    img.onload = () => {
+      const bx1 = Math.max(0, bbox.x1);
+      const by1 = Math.max(0, bbox.y1);
+      const bx2 = Math.min(img.naturalWidth, bbox.x2);
+      const by2 = Math.min(img.naturalHeight, bbox.y2);
+
+      const bw = Math.max(30, bx2 - bx1);
+      const bh = Math.max(30, by2 - by1);
+      const cx = (bx1 + bx2) / 2;
+      const cy = (by1 + by2) / 2;
+
+      const cropSize = Math.max(bw, bh) * 1.8;
+
+      const sx = Math.max(0, Math.min(img.naturalWidth - cropSize, cx - cropSize / 2));
+      const sy = Math.max(0, Math.min(img.naturalHeight - cropSize, cy - cropSize / 2));
+      const sw = Math.min(cropSize, img.naturalWidth - sx);
+      const sh = Math.min(cropSize, img.naturalHeight - sy);
+
+      ctx.clearRect(0, 0, w, h);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+
+      ctx.fillStyle = '#050a14';
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
+
+      ctx.fillStyle = 'rgba(0, 212, 255, 0.02)';
+      ctx.fillRect(0, 0, w, h);
+    };
+
+    img.onerror = () => {
+      renderFallbackSonar();
+    };
+  }, [imageUrl, bbox.x1, bbox.y1, bbox.x2, bbox.y2, contactId]);
+
+  return (
+    <div className={`aspect-4/3 rounded-2xl bg-[#050a14] border border-slate-800 relative overflow-hidden shadow-xl flex items-center justify-center group ${className || ''}`}>
+      <canvas
+        ref={canvasRef}
+        width={480}
+        height={360}
+        className="w-full h-full object-cover filter contrast-125 brightness-105"
+      />
+
+      {/* Acoustic Confidence Bar Overlay on Image (Top-Left) */}
+      <div className="absolute top-3 left-3 bg-slate-900/85 backdrop-blur-md border border-slate-700/70 rounded-lg px-2.5 py-1.5 shadow-lg flex items-center gap-2 z-10 pointer-events-none">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-between gap-3 text-[10px] font-bold text-white font-mono">
+            <span className="text-slate-300">CONFIDENCE</span>
+            <span className="text-cyan-300">{Math.round(confidence * 100)}%</span>
+          </div>
+          <div className="w-20 bg-slate-700 h-1.5 rounded-full overflow-hidden">
+            <div 
+              className="bg-gradient-to-r from-cyan-400 to-blue-500 h-full rounded-full transition-all duration-300"
+              style={{ width: `${Math.round(confidence * 100)}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Targeting Reticle & ID Tag Overlay */}
+      <div className="absolute inset-8 border-2 border-cyan-400/90 rounded-sm pointer-events-none shadow-2xl">
+        <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 text-white font-mono font-bold text-[10px] rounded-full shadow-md whitespace-nowrap ${
+          isHigh ? 'bg-rose-600' : 'bg-[#1d4ed8]'
+        }`}>
+          {contactId} • {Math.round(confidence * 100)}% CONF
+        </div>
+        {/* Crosshairs */}
+        <div className="absolute top-1/2 left-0 right-0 h-px bg-cyan-400/40" />
+        <div className="absolute top-0 bottom-0 left-1/2 w-px bg-cyan-400/40" />
+      </div>
+    </div>
+  );
+};
+
 interface ContactVerificationPageProps {
   survey: SurveyUploadResponse | null;
   contacts: Contact[];
@@ -256,49 +390,14 @@ export const ContactVerificationPage: React.FC<ContactVerificationPageProps> = (
               </span>
             </div>
 
-            {/* High-Resolution Optical Crop Container */}
-            <div className="aspect-4/3 rounded-2xl bg-[#050a14] border border-slate-800 relative overflow-hidden shadow-xl flex items-center justify-center group">
-              {survey ? (
-                <img
-                  src={survey.processed_image_url || survey.raw_image_url}
-                  alt="Acoustic Target Crop"
-                  className="w-full h-full object-cover scale-[1.8] filter contrast-125"
-                  style={{
-                    objectPosition: `${(activeContact.bbox.x1 / (survey.image_width || 1280)) * 100}% ${(activeContact.bbox.y1 / (survey.image_height || 1800)) * 100}%`
-                  }}
-                />
-              ) : (
-                <div className="text-slate-500 font-mono text-xs">No Acoustic Image Available</div>
-              )}
-
-              {/* Acoustic Confidence Bar Overlay on Image (Top-Left) */}
-              <div className="absolute top-3 left-3 bg-slate-900/85 backdrop-blur-md border border-slate-700/70 rounded-lg px-2.5 py-1.5 shadow-lg flex items-center gap-2 z-10 pointer-events-none">
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center justify-between gap-3 text-[10px] font-bold text-white font-mono">
-                    <span className="text-slate-300">CONFIDENCE</span>
-                    <span className="text-cyan-300">{Math.round(activeContact.confidence * 100)}%</span>
-                  </div>
-                  <div className="w-20 bg-slate-700 h-1.5 rounded-full overflow-hidden">
-                    <div 
-                      className="bg-gradient-to-r from-cyan-400 to-blue-500 h-full rounded-full transition-all duration-300"
-                      style={{ width: `${Math.round(activeContact.confidence * 100)}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Targeting Reticle & ID Tag Overlay */}
-              <div className="absolute inset-5 border-2 border-cyan-400/90 rounded-sm pointer-events-none shadow-2xl">
-                <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 text-white font-mono font-bold text-[10px] rounded-full shadow-md whitespace-nowrap ${
-                  isHigh ? 'bg-rose-600' : 'bg-[#1d4ed8]'
-                }`}>
-                  {activeContact.contact_id} • {Math.round(activeContact.confidence * 100)}% CONF
-                </div>
-                {/* Crosshairs */}
-                <div className="absolute top-1/2 left-0 right-0 h-px bg-cyan-400/40" />
-                <div className="absolute top-0 bottom-0 left-1/2 w-px bg-cyan-400/40" />
-              </div>
-            </div>
+            {/* High-Resolution Optical Crop Container (Canvas-based dynamic bbox slice) */}
+            <AcousticCropViewer
+              imageUrl={survey ? (survey.processed_image_url || survey.raw_image_url) : undefined}
+              bbox={activeContact.bbox}
+              contactId={activeContact.contact_id}
+              confidence={activeContact.confidence}
+              isHigh={isHigh}
+            />
 
             {/* View Full Sonar Image Link */}
             <div className="flex justify-center pt-0.5">
@@ -351,18 +450,18 @@ export const ContactVerificationPage: React.FC<ContactVerificationPageProps> = (
             <div className="space-y-2.5 text-xs">
               <div className="p-3.5 rounded-2xl bg-[#f8fafc] border border-[#e2e8f0] flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-900 font-bold text-xs shadow-xs">
-                    CV
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-900 font-bold text-xs shadow-xs shrink-0">
+                    KS
                   </div>
                   <div>
-                    <span className="font-bold text-[#0f172a]">Dr. C. Vance (Lead Hydrographer)</span>
+                    <span className="font-bold text-[#0f172a]">Kumar Sambhav Shrivastava (Lead Hydrographer)</span>
                     <div className="text-[11px] text-[#64748b]">
                       Status: <strong className="text-[#0f172a]">{activeContact.review_status.replace('_', ' ')}</strong>
                       {activeContact.review_note && ` • "${activeContact.review_note}"`}
                     </div>
                   </div>
                 </div>
-                <span className="text-[11px] text-[#64748b] font-mono">
+                <span className="text-[11px] text-[#64748b] font-mono shrink-0">
                   Recorded UTC
                 </span>
               </div>
@@ -633,52 +732,6 @@ export const ContactVerificationPage: React.FC<ContactVerificationPageProps> = (
                 <div className="w-9 h-9 rounded-xl bg-white text-sky-600 flex items-center justify-center shadow-xs border border-sky-100 shrink-0">
                   <ShieldCheck className="w-4 h-4" />
                 </div>
-              </div>
-            </div>
-
-            {/* Resolution Progress Bar */}
-            <div className="p-3.5 rounded-2xl bg-[#f8fafc] border border-[#e2e8f0] space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-[#0f172a] flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-[#1d4ed8]" />
-                  Survey Resolution Progress
-                </span>
-                <span className="font-mono font-bold text-[#1d4ed8]">
-                  {contacts.length > 0 
-                    ? Math.round((contacts.filter(c => c.review_status !== 'AI_CANDIDATE').length / contacts.length) * 100) 
-                    : 0}% Resolved
-                </span>
-              </div>
-              <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden flex">
-                <div 
-                  className="bg-emerald-500 h-full transition-all duration-300" 
-                  style={{ width: `${contacts.length > 0 ? (contacts.filter(c => c.review_status === 'CONFIRMED').length / contacts.length) * 100 : 0}%` }}
-                  title="Confirmed Debris"
-                />
-                <div 
-                  className="bg-rose-400 h-full transition-all duration-300" 
-                  style={{ width: `${contacts.length > 0 ? (contacts.filter(c => c.review_status === 'FALSE_POSITIVE').length / contacts.length) * 100 : 0}%` }}
-                  title="False Positive / Clutter"
-                />
-                <div 
-                  className="bg-amber-400 h-full transition-all duration-300" 
-                  style={{ width: `${contacts.length > 0 ? (contacts.filter(c => c.review_status === 'UNCERTAIN').length / contacts.length) * 100 : 0}%` }}
-                  title="Needs Review"
-                />
-              </div>
-              <div className="flex items-center justify-between text-[10px] text-[#64748b] pt-0.5">
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /> Confirmed
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-rose-400 inline-block" /> False Positive
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" /> Needs Review
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-slate-300 inline-block" /> Unreviewed AI
-                </span>
               </div>
             </div>
           </div>

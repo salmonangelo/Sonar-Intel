@@ -176,6 +176,61 @@ function getRiskTheme(contact: Contact) {
   };
 }
 
+// Mathematical projection helper to strictly align candidate dots directly onto the surveyor trackline
+function snapToTrackline(
+  lat: number,
+  lng: number,
+  track: NavWaypoint[]
+): { latitude: number; longitude: number } {
+  if (!track || track.length === 0) return { latitude: lat, longitude: lng };
+  if (track.length === 1) return { latitude: track[0].latitude, longitude: track[0].longitude };
+
+  let minDistanceSq = Infinity;
+  let bestLat = lat;
+  let bestLng = lng;
+
+  for (let i = 0; i < track.length - 1; i++) {
+    const p1 = track[i];
+    const p2 = track[i + 1];
+    if (p1.latitude == null || p1.longitude == null || p2.latitude == null || p2.longitude == null) continue;
+
+    const x1 = p1.longitude;
+    const y1 = p1.latitude;
+    const x2 = p2.longitude;
+    const y2 = p2.latitude;
+
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const lenSq = dx * dx + dy * dy;
+
+    if (lenSq < 1e-12) {
+      const dSq = (lng - x1) ** 2 + (lat - y1) ** 2;
+      if (dSq < minDistanceSq) {
+        minDistanceSq = dSq;
+        bestLat = y1;
+        bestLng = x1;
+      }
+      continue;
+    }
+
+    const t = Math.max(0, Math.min(1, ((lng - x1) * dx + (lat - y1) * dy) / lenSq));
+    const projX = x1 + t * dx;
+    const projY = y1 + t * dy;
+    const distSq = (lng - projX) ** 2 + (lat - projY) ** 2;
+
+    if (distSq < minDistanceSq) {
+      minDistanceSq = distSq;
+      bestLat = projY;
+      bestLng = projX;
+    }
+  }
+
+  return {
+    latitude: Number(bestLat.toFixed(6)),
+    longitude: Number(bestLng.toFixed(6))
+  };
+}
+
 // 100% Free, open, high-resolution tile sources with ZERO API keys, ZERO watermarks & ZERO missing tile banners.
 const BASEMAP_STYLES = {
   osm: {
@@ -314,72 +369,45 @@ export const MapView: React.FC<MapViewProps> = ({
     }
   }, [selectedContact]);
 
-  // Determine effective candidates (use provided list if available, or fallback to default ocean benchm  // Memoize effective ocean candidates (strictly 4 candidates situated safely in deep offshore Indian waters > 12-16 km offshore)
-  const effectiveContacts = React.useMemo(() => {
-    const rawList = (contacts && contacts.length > 0) ? contacts : DEFAULT_OCEAN_CANDIDATES;
-    const sourceContacts = rawList.slice(0, 4);
-    return sourceContacts.map((c, idx) => {
-      if (c.latitude != null && c.longitude != null) {
-        return c;
-      }
-      // Interpolate distinct coordinates along the deep ocean survey corridor
-      const fallbackBase = DEFAULT_OCEAN_CANDIDATES[idx % DEFAULT_OCEAN_CANDIDATES.length];
-      return {
-        ...c,
-        latitude: fallbackBase?.latitude ?? (13.0520 + idx * 0.0120),
-        longitude: fallbackBase?.longitude ?? (80.3960 + idx * 0.0120),
-        localization_status: c.localization_status || 'ESTIMATED'
-      };
-    });
-  }, [contacts]);
-
-  // Construct a continuous, high-fidelity surveyor trackline
+  // 1. Construct a continuous, high-fidelity surveyor trackline
   const effectiveNavTrack: NavWaypoint[] = React.useMemo(() => {
     if (navTrack && navTrack.length > 1) {
       return navTrack;
     }
-    // If navTrack is empty or has only 1 point, build a continuous survey line from effectiveContacts
-    const validCoords = effectiveContacts
-      .filter(c => c.latitude != null && c.longitude != null)
-      .map(c => ({ lat: c.latitude!, lng: c.longitude! }));
-
-    if (validCoords.length >= 2) {
-      const sorted = [...validCoords].sort((a, b) => a.lat - b.lat);
-      const minLat = sorted[0].lat;
-      const minLng = sorted[0].lng;
-      const maxLat = sorted[sorted.length - 1].lat;
-      const maxLng = sorted[sorted.length - 1].lng;
-      
-      const dLat = maxLat - minLat;
-      const dLng = maxLng - minLng;
-      
-      // Extend trackline 35% before start and 35% after end for realistic towfish run-in/run-out
-      const startPt: NavWaypoint = {
-        ping_id: 1,
-        latitude: minLat - (dLat !== 0 ? dLat * 0.35 : 0.016),
-        longitude: minLng - (dLng !== 0 ? dLng * 0.35 : 0.016),
-        heading: 42.0
-      };
-      
-      const midPoints: NavWaypoint[] = sorted.map((pt, i) => ({
-        ping_id: 10 + i * 20,
-        latitude: pt.lat,
-        longitude: pt.lng,
-        heading: 42.0
-      }));
-
-      const endPt: NavWaypoint = {
-        ping_id: 100 + sorted.length * 20,
-        latitude: maxLat + (dLat !== 0 ? dLat * 0.35 : 0.016),
-        longitude: maxLng + (dLng !== 0 ? dLng * 0.35 : 0.016),
-        heading: 42.0
-      };
-
-      return [startPt, ...midPoints, endPt];
-    }
-
     return DEFAULT_NAV_TRACK;
-  }, [navTrack, effectiveContacts]);
+  }, [navTrack]);
+
+  // 2. Memoize strictly 4 ocean candidates aligned directly onto the surveyor trackline
+  const effectiveContacts = React.useMemo(() => {
+    const rawList = (contacts && contacts.length > 0) ? contacts : DEFAULT_OCEAN_CANDIDATES;
+    const sourceContacts = rawList.slice(0, 4);
+
+    return sourceContacts.map((c, idx) => {
+      let targetLat = c.latitude;
+      let targetLng = c.longitude;
+
+      if (targetLat == null || targetLng == null) {
+        // Distribute proportionally along the surveyor trackline if missing
+        const fraction = (idx + 1) / (sourceContacts.length + 1);
+        const ptIndex = Math.max(
+          0,
+          Math.min(effectiveNavTrack.length - 1, Math.round(fraction * (effectiveNavTrack.length - 1)))
+        );
+        targetLat = effectiveNavTrack[ptIndex]?.latitude ?? (13.0520 + idx * 0.0120);
+        targetLng = effectiveNavTrack[ptIndex]?.longitude ?? (80.3960 + idx * 0.0120);
+      }
+
+      // Mathematical projection: snap candidate center directly onto the surveyor trackline
+      const snapped = snapToTrackline(targetLat, targetLng, effectiveNavTrack);
+
+      return {
+        ...c,
+        latitude: snapped.latitude,
+        longitude: snapped.longitude,
+        localization_status: c.localization_status || 'ESTIMATED'
+      };
+    });
+  }, [contacts, effectiveNavTrack]);
 
   // Counts by actual risk theme
   const highCount = effectiveContacts.filter(c => getRiskTheme(c).type === 'high').length;

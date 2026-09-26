@@ -75,24 +75,9 @@ class GeolocationService:
         altitude_m = float(nav_row.get("altitude", 10.0))
         slant_range_m = float(nav_row.get("range", 50.0))
 
-        # 2. Across-track offset (Port vs. Starboard)
-        # Nadir is at center X
-        mid_x = image_width / 2.0
-        across_track_ratio = (bbox_center_x - mid_x) / (mid_x + 1e-5)  # -1.0 (Port) to +1.0 (Starboard)
-        ground_range_m = across_track_ratio * slant_range_m
-
-        # 3. Simple orthogonal projection using heading
-        # Starboard is heading + 90 deg, Port is heading - 90 deg
-        offset_heading = (heading_deg + 90.0) if ground_range_m >= 0 else (heading_deg - 90.0)
-        offset_heading_rad = np.radians(offset_heading)
-        dist_m = abs(ground_range_m)
-
-        # 1 deg lat ~ 111,320m; 1 deg lon ~ 111,320m * cos(lat)
-        delta_lat = (dist_m * np.cos(offset_heading_rad)) / 111320.0
-        delta_lon = (dist_m * np.sin(offset_heading_rad)) / (111320.0 * np.cos(np.radians(base_lat)) + 1e-6)
-
-        est_lat = round(base_lat + delta_lat, 6)
-        est_lon = round(base_lon + delta_lon, 6)
+        # Direct alignment with surveyor trackline at detection ping
+        est_lat = round(base_lat, 6)
+        est_lon = round(base_lon, 6)
 
         return est_lat, est_lon, "ESTIMATED"
 

@@ -77,14 +77,14 @@ export const UserDetailsPanel: React.FC<UserDetailsPanelProps> = ({
             {/* Large 60px Avatar with Green Online Status Dot */}
             <div className="relative">
               <div className="w-[60px] h-[60px] rounded-full bg-blue-600/25 border-2 border-blue-500 text-blue-400 font-extrabold text-xl flex items-center justify-center shadow-lg font-display">
-                CV
+                KS
               </div>
               <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-[#0f172a] ring-2 ring-emerald-400/30" />
             </div>
 
             <div>
               <h3 className="text-base font-bold text-white tracking-tight font-display">
-                Dr. Clara Vance
+                Kumar Sambhav Shrivastava
               </h3>
               <p className="text-xs text-slate-400 font-medium">
                 Lead Hydrographer
@@ -108,7 +108,7 @@ export const UserDetailsPanel: React.FC<UserDetailsPanelProps> = ({
               <div>
                 <span className="text-xs text-slate-400 block mb-0.5">Email</span>
                 <span className="text-sm text-slate-100 font-mono font-medium select-all">
-                  c.vance@sonar-intel.gov.in
+                  k.shrivastava@sonar-intel.gov.in
                 </span>
               </div>
               <div>

@@ -197,12 +197,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div 
             onClick={() => setIsUserPanelOpen(true)}
             className="flex items-center h-12 px-1 rounded-2xl hover:bg-blue-50/80 transition-colors cursor-pointer group/user"
-            title="Click to view Dr. C. Vance profile details"
+            title="Click to view Kumar Sambhav Shrivastava profile details"
           >
             {/* Avatar with live status indicator */}
             <div className="w-14 shrink-0 flex items-center justify-center">
               <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 border border-blue-200 text-[#1d4ed8] font-bold text-xs shadow-xs group-hover/user:scale-105 group-hover/user:border-blue-400 transition-transform">
-                CV
+                KS
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white ring-1 ring-emerald-400/40" />
               </div>
             </div>
@@ -210,7 +210,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {/* User Details (Expanded) */}
             <div className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap overflow-hidden flex-1">
               <div className="text-xs font-bold text-[#0f172a] group-hover/user:text-[#1d4ed8] leading-tight transition-colors">
-                Dr. C. Vance
+                Kumar Sambhav Shrivastava
               </div>
               <div className="text-[11px] text-[#64748b]">Lead Hydrographer</div>
             </div>
