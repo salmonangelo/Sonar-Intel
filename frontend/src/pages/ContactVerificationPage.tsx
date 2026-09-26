@@ -451,10 +451,10 @@ export const ContactVerificationPage: React.FC<ContactVerificationPageProps> = (
               <div className="p-3.5 rounded-2xl bg-[#f8fafc] border border-[#e2e8f0] flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-900 font-bold text-xs shadow-xs shrink-0">
-                    KS
+                    CV
                   </div>
                   <div>
-                    <span className="font-bold text-[#0f172a]">Kumar Sambhav Shrivastava (Lead Hydrographer)</span>
+                    <span className="font-bold text-[#0f172a]">Dr. C. Vance (Lead Hydrographer)</span>
                     <div className="text-[11px] text-[#64748b]">
                       Status: <strong className="text-[#0f172a]">{activeContact.review_status.replace('_', ' ')}</strong>
                       {activeContact.review_note && ` • "${activeContact.review_note}"`}
