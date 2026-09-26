@@ -716,9 +716,9 @@ export const MapView: React.FC<MapViewProps> = ({
       const zoom = mapInstance.current.getZoom();
 
       markerElements.forEach(({ el, halo, dot, label, tag, contact, isSelected }) => {
-        if (zoom < 9.0) {
-          // Tier 1: Macro State/Peninsula view (zoom < 9.0) - Micro jewel pip (5px-8px). NO text, NO risk badge -> Zero land overlap
-          const dotSize = isSelected ? 8 : 5;
+        if (zoom < 7.5) {
+          // Tier 1: Macro Country/Peninsula Overview (zoom < 7.5) - Micro jewel pip (6px-9px), text/tag hidden
+          const dotSize = isSelected ? 9 : 6;
           el.style.width = `${dotSize}px`;
           el.style.height = `${dotSize}px`;
           dot.style.width = `${dotSize}px`;
@@ -729,22 +729,9 @@ export const MapView: React.FC<MapViewProps> = ({
           halo.style.height = '12px';
           label.style.display = 'none';
           tag.style.display = 'none';
-        } else if (zoom < 11.5) {
-          // Tier 2: Regional / Coastal Overview (9.0 <= zoom < 11.5) - Compact pip (8px-12px), subtle halo, NO text -> Zero land overlap
-          const dotSize = isSelected ? 12 : 8;
-          el.style.width = `${dotSize}px`;
-          el.style.height = `${dotSize}px`;
-          dot.style.width = `${dotSize}px`;
-          dot.style.height = `${dotSize}px`;
-          dot.style.borderWidth = '1.5px';
-          halo.style.display = 'block';
-          halo.style.width = `${dotSize + 6}px`;
-          halo.style.height = `${dotSize + 6}px`;
-          label.style.display = 'none';
-          tag.style.display = 'none';
-        } else if (zoom < 13.5) {
-          // Tier 3: Corridor Mid-Zoom (11.5 <= zoom < 13.5) - 16px-20px dot with short ID inside (e.g. C1), NO external tags
-          const dotSize = isSelected ? 22 : 16;
+        } else if (zoom < 10.0) {
+          // Tier 2: Regional View (7.5 <= zoom < 10.0) - Compact colored dot (11px-15px), subtle halo, text/tag hidden
+          const dotSize = isSelected ? 15 : 11;
           el.style.width = `${dotSize}px`;
           el.style.height = `${dotSize}px`;
           dot.style.width = `${dotSize}px`;
@@ -753,21 +740,36 @@ export const MapView: React.FC<MapViewProps> = ({
           halo.style.display = 'block';
           halo.style.width = `${dotSize + 8}px`;
           halo.style.height = `${dotSize + 8}px`;
-          label.style.display = 'inline-block';
-          label.textContent = contact.contact_id.replace(/^C0*/, 'C');
-          label.style.fontSize = isSelected ? '9px' : '7.5px';
+          label.style.display = 'none';
           tag.style.display = 'none';
-        } else {
-          // Tier 4: Close Target Inspection (zoom >= 13.5) - Full 26px-32px dot with full target ID and floating risk badge
-          const dotSize = isSelected ? 32 : 26;
-          el.style.width = `${dotSize}px`;
-          el.style.height = `${dotSize}px`;
+        } else if (zoom < 13.0) {
+          // Tier 3: Standard Dashboard & Coastal Corridor View (10.0 <= zoom < 13.0) - Prominent 22px-28px dot with clear Target ID inside
+          const dotSize = isSelected ? 28 : 22;
+          const haloSize = isSelected ? 38 : 30;
+          el.style.width = `${haloSize}px`;
+          el.style.height = `${haloSize}px`;
           dot.style.width = `${dotSize}px`;
           dot.style.height = `${dotSize}px`;
           dot.style.borderWidth = '2.5px';
           halo.style.display = 'block';
-          halo.style.width = `${dotSize + 12}px`;
-          halo.style.height = `${dotSize + 12}px`;
+          halo.style.width = `${haloSize}px`;
+          halo.style.height = `${haloSize}px`;
+          label.style.display = 'inline-block';
+          label.textContent = contact.contact_id;
+          label.style.fontSize = isSelected ? '10px' : '8.5px';
+          tag.style.display = 'none';
+        } else {
+          // Tier 4: Detailed Target Inspection (zoom >= 13.0) - Full 28px-34px dot with full target ID and floating risk badge
+          const dotSize = isSelected ? 34 : 28;
+          const haloSize = isSelected ? 46 : 38;
+          el.style.width = `${haloSize}px`;
+          el.style.height = `${haloSize}px`;
+          dot.style.width = `${dotSize}px`;
+          dot.style.height = `${dotSize}px`;
+          dot.style.borderWidth = '2.5px';
+          halo.style.display = 'block';
+          halo.style.width = `${haloSize}px`;
+          halo.style.height = `${haloSize}px`;
           label.style.display = 'inline-block';
           label.textContent = contact.contact_id;
           label.style.fontSize = isSelected ? '11px' : '9.5px';
