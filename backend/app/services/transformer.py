@@ -85,9 +85,9 @@ def transform_drishti_detections_to_contacts(
                 lat, lon, loc_status = None, None, "UNAVAILABLE"
 
         # Determine operational priority based on confidence and physics context
-        if det.confidence >= 0.70 or context_score >= 0.60:
+        if det.confidence >= 0.75 or (det.confidence >= 0.65 and context_score >= 0.85):
             priority = "HIGH"
-        elif det.confidence >= 0.40 or context_score >= 0.35:
+        elif det.confidence >= 0.50 or (det.confidence >= 0.40 and context_score >= 0.65):
             priority = "MEDIUM"
         else:
             priority = "LOW"

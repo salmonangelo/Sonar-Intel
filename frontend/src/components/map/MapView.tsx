@@ -34,12 +34,12 @@ export const DEFAULT_OCEAN_CANDIDATES: Contact[] = [
     survey_id: 'SURV_VIATOR_04_BENCHMARK',
     class_name: 'shipwreck_structural_rib',
     confidence: 0.88,
-    bbox: { x1: 210, y1: 480, x2: 290, y2: 620 },
+    bbox: { x1: 609, y1: 1024, x2: 753, y2: 1118 },
     priority: 'HIGH',
     review_status: 'AI_CANDIDATE',
     localization_status: 'ESTIMATED',
-    latitude: 13.088000,
-    longitude: 80.432000,
+    latitude: 13.072000,
+    longitude: 80.416000,
     shadow_evidence: 0.88,
     context_score: 0.91,
     data_quality: 0.95,
@@ -51,12 +51,12 @@ export const DEFAULT_OCEAN_CANDIDATES: Contact[] = [
     survey_id: 'SURV_VIATOR_04_BENCHMARK',
     class_name: 'iron_hull_plate',
     confidence: 0.83,
-    bbox: { x1: 340, y1: 520, x2: 410, y2: 690 },
+    bbox: { x1: 1021, y1: 1053, x2: 1151, y2: 1154 },
     priority: 'HIGH',
     review_status: 'AI_CANDIDATE',
     localization_status: 'ESTIMATED',
-    latitude: 13.076000,
-    longitude: 80.420000,
+    latitude: 13.070000,
+    longitude: 80.414000,
     shadow_evidence: 0.82,
     context_score: 0.87,
     data_quality: 0.92,
@@ -68,12 +68,12 @@ export const DEFAULT_OCEAN_CANDIDATES: Contact[] = [
     survey_id: 'SURV_VIATOR_04_BENCHMARK',
     class_name: 'cargo_crate_debris',
     confidence: 0.67,
-    bbox: { x1: 620, y1: 310, x2: 680, y2: 420 },
+    bbox: { x1: 419, y1: 977, x2: 640, y2: 1136 },
     priority: 'MEDIUM',
     review_status: 'AI_CANDIDATE',
     localization_status: 'ESTIMATED',
-    latitude: 13.064000,
-    longitude: 80.408000,
+    latitude: 13.068000,
+    longitude: 80.412000,
     shadow_evidence: 0.64,
     context_score: 0.75,
     data_quality: 0.88,
@@ -85,12 +85,12 @@ export const DEFAULT_OCEAN_CANDIDATES: Contact[] = [
     survey_id: 'SURV_VIATOR_04_BENCHMARK',
     class_name: 'anchor_chain_link',
     confidence: 0.42,
-    bbox: { x1: 320, y1: 610, x2: 430, y2: 720 },
+    bbox: { x1: 290, y1: 1024, x2: 638, y2: 1079 },
     priority: 'LOW',
     review_status: 'CONFIRMED',
     localization_status: 'ESTIMATED',
-    latitude: 13.052000,
-    longitude: 80.396000,
+    latitude: 13.066000,
+    longitude: 80.410000,
     shadow_evidence: 0.38,
     context_score: 0.45,
     data_quality: 0.96,
@@ -386,12 +386,20 @@ export const MapView: React.FC<MapViewProps> = ({
       let targetLat = c.latitude;
       let targetLng = c.longitude;
 
-      if (targetLat == null || targetLng == null) {
-        // Distribute proportionally along the surveyor trackline if missing
-        const fraction = (idx + 1) / (sourceContacts.length + 1);
+      // Check if this contact has duplicate or clustered coordinates with preceding contacts
+      const isClusteredWithPreceding = idx > 0 && sourceContacts.slice(0, idx).some(
+        prev => prev.latitude != null && prev.longitude != null &&
+          Math.abs(prev.latitude - (targetLat ?? 0)) < 0.003 &&
+          Math.abs(prev.longitude - (targetLng ?? 0)) < 0.003
+      );
+
+      if (targetLat == null || targetLng == null || isClusteredWithPreceding) {
+        // Distribute proportionally along the surveyor trackline
+        const waypointRatios = [0.80, 0.60, 0.40, 0.20];
+        const ratio = waypointRatios[idx] ?? ((idx + 1) / (sourceContacts.length + 1));
         const ptIndex = Math.max(
           0,
-          Math.min(effectiveNavTrack.length - 1, Math.round(fraction * (effectiveNavTrack.length - 1)))
+          Math.min(effectiveNavTrack.length - 1, Math.round(ratio * (effectiveNavTrack.length - 1)))
         );
         targetLat = effectiveNavTrack[ptIndex]?.latitude ?? (13.0520 + idx * 0.0120);
         targetLng = effectiveNavTrack[ptIndex]?.longitude ?? (80.3960 + idx * 0.0120);

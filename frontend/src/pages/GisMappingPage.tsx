@@ -482,7 +482,7 @@ export const GisMappingPage: React.FC<GisMappingPageProps> = ({
                               ? 'bg-rose-500 shadow-xs'
                               : isMed
                               ? 'bg-amber-500 shadow-xs'
-                              : 'bg-yellow-400'
+                              : 'bg-emerald-500 shadow-xs'
                           }`} />
 
                           <div>
