@@ -133,6 +133,8 @@ def load_demo_sample(sample_id: str, db: Session = Depends(get_db)):
         nav_file_path=nav_dest,
         confidence_threshold=0.20
     )
+    if len(contacts) > 4:
+        contacts = contacts[:4]
     ContactRepository(db).save_contacts(contacts)
 
     survey_dto = SurveyUploadResponse(

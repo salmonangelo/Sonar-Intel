@@ -9,12 +9,12 @@ def generate_indian_ocean_nav_files():
     tracks = [
         {
             "name": "viator_04_nav.csv",
-            "base_lat": 13.04500,  # Bay of Bengal / Deep Offshore Corridor (15 km East of Chennai)
-            "base_lon": 80.40500,
+            "base_lat": 13.03600,  # Bay of Bengal / Deep Ocean Corridor (11-15 km East of Chennai)
+            "base_lon": 80.38000,
             "heading": 42.0,
             "pings": 150,
-            "d_lat": 0.000320,
-            "d_lon": 0.000280
+            "d_lat": 0.000450,
+            "d_lon": 0.000450
         },
         {
             "name": "corsican_02_nav.csv",

@@ -27,19 +27,19 @@ interface MapViewProps {
 }
 
 // Curated active ocean candidates with distinct risk levels (Red = High Risk, Orange = Medium Risk, Green = Low Risk)
-// Curated active ocean candidates safely situated in deep offshore Indian waters (> 15 km offshore)
+// Exactly 4 curated candidates situated safely in the offshore Indian Ocean corridor (> 12-16 km offshore)
 export const DEFAULT_OCEAN_CANDIDATES: Contact[] = [
   {
     contact_id: 'C001',
     survey_id: 'SURV_VIATOR_04_BENCHMARK',
     class_name: 'shipwreck_structural_rib',
-    confidence: 0.83,
+    confidence: 0.88,
     bbox: { x1: 210, y1: 480, x2: 290, y2: 620 },
     priority: 'HIGH',
     review_status: 'AI_CANDIDATE',
     localization_status: 'ESTIMATED',
     latitude: 13.088000,
-    longitude: 80.441000,
+    longitude: 80.432000,
     shadow_evidence: 0.88,
     context_score: 0.91,
     data_quality: 0.95,
@@ -55,12 +55,12 @@ export const DEFAULT_OCEAN_CANDIDATES: Contact[] = [
     priority: 'HIGH',
     review_status: 'AI_CANDIDATE',
     localization_status: 'ESTIMATED',
-    latitude: 13.079000,
-    longitude: 80.433000,
+    latitude: 13.076000,
+    longitude: 80.420000,
     shadow_evidence: 0.82,
     context_score: 0.87,
     data_quality: 0.92,
-    review_note: 'Heavy iron hull plate contact with sharp specular reflection',
+    review_note: 'Heavy iron hull plate contact with sharp specular highlight',
     model_version: 'Acoustic-YOLOv8s-v1.0'
   },
   {
@@ -72,8 +72,8 @@ export const DEFAULT_OCEAN_CANDIDATES: Contact[] = [
     priority: 'MEDIUM',
     review_status: 'AI_CANDIDATE',
     localization_status: 'ESTIMATED',
-    latitude: 13.070000,
-    longitude: 80.425000,
+    latitude: 13.064000,
+    longitude: 80.408000,
     shadow_evidence: 0.64,
     context_score: 0.75,
     data_quality: 0.88,
@@ -83,81 +83,29 @@ export const DEFAULT_OCEAN_CANDIDATES: Contact[] = [
   {
     contact_id: 'C004',
     survey_id: 'SURV_VIATOR_04_BENCHMARK',
-    class_name: 'cable_spool_assembly',
-    confidence: 0.71,
-    bbox: { x1: 450, y1: 780, x2: 560, y2: 890 },
-    priority: 'MEDIUM',
-    review_status: 'AI_CANDIDATE',
-    localization_status: 'ESTIMATED',
-    latitude: 13.061000,
-    longitude: 80.418000,
-    shadow_evidence: 0.69,
-    context_score: 0.72,
-    data_quality: 0.90,
-    review_note: 'Medium risk cylindrical subsea spool anomaly',
-    model_version: 'Acoustic-YOLOv8s-v1.0'
-  },
-  {
-    contact_id: 'C005',
-    survey_id: 'SURV_VIATOR_04_BENCHMARK',
-    class_name: 'boiler_tank_cylinder',
-    confidence: 0.89,
-    bbox: { x1: 1120, y1: 340, x2: 1240, y2: 450 },
-    priority: 'HIGH',
-    review_status: 'AI_CANDIDATE',
-    localization_status: 'ESTIMATED',
-    latitude: 13.097000,
-    longitude: 80.449000,
-    shadow_evidence: 0.91,
-    context_score: 0.93,
-    data_quality: 0.97,
-    review_note: 'High risk high-reflectivity pressurized vessel structure',
-    model_version: 'Acoustic-YOLOv8s-v1.0'
-  },
-  {
-    contact_id: 'C006',
-    survey_id: 'SURV_VIATOR_04_BENCHMARK',
     class_name: 'anchor_chain_link',
     confidence: 0.42,
     bbox: { x1: 320, y1: 610, x2: 430, y2: 720 },
     priority: 'LOW',
     review_status: 'CONFIRMED',
     localization_status: 'ESTIMATED',
-    latitude: 13.048000,
-    longitude: 80.406000,
+    latitude: 13.052000,
+    longitude: 80.396000,
     shadow_evidence: 0.38,
     context_score: 0.45,
     data_quality: 0.96,
-    review_note: 'Low risk benign mooring tackle contact',
-    model_version: 'Acoustic-YOLOv8s-v1.0'
-  },
-  {
-    contact_id: 'C007',
-    survey_id: 'SURV_VIATOR_04_BENCHMARK',
-    class_name: 'subsea_pipeline_section',
-    confidence: 0.64,
-    bbox: { x1: 710, y1: 820, x2: 810, y2: 930 },
-    priority: 'MEDIUM',
-    review_status: 'AI_CANDIDATE',
-    localization_status: 'ESTIMATED',
-    latitude: 13.055000,
-    longitude: 80.412000,
-    shadow_evidence: 0.61,
-    context_score: 0.68,
-    data_quality: 0.89,
-    review_note: 'Medium risk linear pipeline section',
+    review_note: 'Low risk benign mooring tackle contact (Confirmed)',
     model_version: 'Acoustic-YOLOv8s-v1.0'
   }
 ];
 
 export const DEFAULT_NAV_TRACK: NavWaypoint[] = [
-  { ping_id: 1, latitude: 13.040000, longitude: 80.400000, heading: 42.0 },
-  { ping_id: 25, latitude: 13.054000, longitude: 80.412000, heading: 42.0 },
-  { ping_id: 50, latitude: 13.072000, longitude: 80.426000, heading: 42.0 },
-  { ping_id: 75, latitude: 13.088000, longitude: 80.441000, heading: 42.0 },
-  { ping_id: 100, latitude: 13.098000, longitude: 80.450000, heading: 42.0 },
-  { ping_id: 125, latitude: 13.115000, longitude: 80.465000, heading: 42.0 },
-  { ping_id: 150, latitude: 13.128000, longitude: 80.476000, heading: 42.0 }
+  { ping_id: 1, latitude: 13.036000, longitude: 80.380000, heading: 42.0 },
+  { ping_id: 25, latitude: 13.052000, longitude: 80.396000, heading: 42.0 },
+  { ping_id: 50, latitude: 13.064000, longitude: 80.408000, heading: 42.0 },
+  { ping_id: 75, latitude: 13.076000, longitude: 80.420000, heading: 42.0 },
+  { ping_id: 100, latitude: 13.088000, longitude: 80.432000, heading: 42.0 },
+  { ping_id: 125, latitude: 13.104000, longitude: 80.448000, heading: 42.0 }
 ];
 
 // Helper to determine dot color and floating card style based on actual Risk Level & Review Status
@@ -366,10 +314,10 @@ export const MapView: React.FC<MapViewProps> = ({
     }
   }, [selectedContact]);
 
-  // Determine effective candidates (use provided list if available, or fallback to default ocean benchmark)
-  // Memoize effective ocean candidates (situated safely in deep offshore Indian waters > 14 km offshore)
+  // Determine effective candidates (use provided list if available, or fallback to default ocean benchm  // Memoize effective ocean candidates (strictly 4 candidates situated safely in deep offshore Indian waters > 12-16 km offshore)
   const effectiveContacts = React.useMemo(() => {
-    const sourceContacts = (contacts && contacts.length > 0) ? contacts : DEFAULT_OCEAN_CANDIDATES;
+    const rawList = (contacts && contacts.length > 0) ? contacts : DEFAULT_OCEAN_CANDIDATES;
+    const sourceContacts = rawList.slice(0, 4);
     return sourceContacts.map((c, idx) => {
       if (c.latitude != null && c.longitude != null) {
         return c;
@@ -378,8 +326,8 @@ export const MapView: React.FC<MapViewProps> = ({
       const fallbackBase = DEFAULT_OCEAN_CANDIDATES[idx % DEFAULT_OCEAN_CANDIDATES.length];
       return {
         ...c,
-        latitude: fallbackBase?.latitude ?? (13.0480 + (idx % 7) * 0.008),
-        longitude: fallbackBase?.longitude ?? (80.4150 + (idx % 7) * 0.0065),
+        latitude: fallbackBase?.latitude ?? (13.0520 + idx * 0.0120),
+        longitude: fallbackBase?.longitude ?? (80.3960 + idx * 0.0120),
         localization_status: c.localization_status || 'ESTIMATED'
       };
     });
@@ -408,8 +356,8 @@ export const MapView: React.FC<MapViewProps> = ({
       // Extend trackline 35% before start and 35% after end for realistic towfish run-in/run-out
       const startPt: NavWaypoint = {
         ping_id: 1,
-        latitude: minLat - (dLat !== 0 ? dLat * 0.35 : 0.015),
-        longitude: minLng - (dLng !== 0 ? dLng * 0.35 : 0.012),
+        latitude: minLat - (dLat !== 0 ? dLat * 0.35 : 0.016),
+        longitude: minLng - (dLng !== 0 ? dLng * 0.35 : 0.016),
         heading: 42.0
       };
       
@@ -422,8 +370,8 @@ export const MapView: React.FC<MapViewProps> = ({
 
       const endPt: NavWaypoint = {
         ping_id: 100 + sorted.length * 20,
-        latitude: maxLat + (dLat !== 0 ? dLat * 0.35 : 0.015),
-        longitude: maxLng + (dLng !== 0 ? dLng * 0.35 : 0.012),
+        latitude: maxLat + (dLat !== 0 ? dLat * 0.35 : 0.016),
+        longitude: maxLng + (dLng !== 0 ? dLng * 0.35 : 0.016),
         heading: 42.0
       };
 
@@ -438,93 +386,122 @@ export const MapView: React.FC<MapViewProps> = ({
   const medCount = effectiveContacts.filter(c => getRiskTheme(c).type === 'medium').length;
   const lowCount = effectiveContacts.filter(c => getRiskTheme(c).type === 'low').length;
 
-  // Default coordinate center (offshore Bay of Bengal: 80.4200° E, 13.0720° N)
-  const defaultCenter: [number, number] = [80.4200, 13.0720];
+  // Default coordinate center (framing both Chennai coastal land on left and ocean survey on right)
+  const defaultCenter: [number, number] = [80.3650, 13.0700];
 
   // Render high-visibility surveyor trackline, glowing corridor & swath boundary
   const renderTrackline = (map: maplibregl.Map) => {
+    if (!map) return;
+
     const trackSourceId = 'towfish-track-source';
     const trackGlowId = 'towfish-track-glow';
+    const trackOutlineId = 'towfish-track-outline';
     const trackLayerId = 'towfish-track-line';
     const trackCoreId = 'towfish-track-core';
     const swathBandId = 'towfish-swath-band';
 
-    // Remove existing layers & sources safely
-    if (map.getLayer(trackCoreId)) map.removeLayer(trackCoreId);
-    if (map.getLayer(trackLayerId)) map.removeLayer(trackLayerId);
-    if (map.getLayer(trackGlowId)) map.removeLayer(trackGlowId);
-    if (map.getLayer(swathBandId)) map.removeLayer(swathBandId);
-    if (map.getSource(trackSourceId)) map.removeSource(trackSourceId);
-
-    if (!showTrackline || !effectiveNavTrack || effectiveNavTrack.length === 0) return;
+    if (!showTrackline || !effectiveNavTrack || effectiveNavTrack.length === 0) {
+      try {
+        if (map.getLayer(trackCoreId)) map.removeLayer(trackCoreId);
+        if (map.getLayer(trackLayerId)) map.removeLayer(trackLayerId);
+        if (map.getLayer(trackOutlineId)) map.removeLayer(trackOutlineId);
+        if (map.getLayer(trackGlowId)) map.removeLayer(trackGlowId);
+        if (map.getLayer(swathBandId)) map.removeLayer(swathBandId);
+        if (map.getSource(trackSourceId)) map.removeSource(trackSourceId);
+      } catch (e) {}
+      return;
+    }
 
     const coordinates = effectiveNavTrack
       .filter(p => p.latitude != null && p.longitude != null)
       .map(p => [p.longitude, p.latitude]);
 
-    if (coordinates.length === 0) return;
+    if (coordinates.length < 2) return;
 
-    map.addSource(trackSourceId, {
-      type: 'geojson',
-      data: {
-        type: 'Feature',
-        properties: {},
-        geometry: {
-          type: 'LineString',
-          coordinates: coordinates
+    const geoData: any = {
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'LineString',
+        coordinates: coordinates
+      }
+    };
+
+    const existingSource = map.getSource(trackSourceId) as maplibregl.GeoJSONSource | undefined;
+    if (existingSource && typeof existingSource.setData === 'function') {
+      existingSource.setData(geoData);
+      return;
+    }
+
+    try {
+      map.addSource(trackSourceId, {
+        type: 'geojson',
+        data: geoData
+      });
+
+      // 1. Swath Acoustic Footprint Band (50m Port/Starboard Coverage)
+      map.addLayer({
+        id: swathBandId,
+        type: 'line',
+        source: trackSourceId,
+        paint: {
+          'line-color': '#0284c7',
+          'line-width': ['interpolate', ['linear'], ['zoom'], 8, 14, 11, 28, 16, 65],
+          'line-opacity': 0.25
         }
-      }
-    });
+      });
 
-    // 1. Swath Acoustic Footprint Band (50m Port/Starboard Coverage)
-    map.addLayer({
-      id: swathBandId,
-      type: 'line',
-      source: trackSourceId,
-      paint: {
-        'line-color': '#0284c7',
-        'line-width': ['interpolate', ['linear'], ['zoom'], 8, 12, 12, 28, 16, 60],
-        'line-opacity': 0.14
-      }
-    });
+      // 2. High-Contrast Outer Navy Outline
+      map.addLayer({
+        id: trackOutlineId,
+        type: 'line',
+        source: trackSourceId,
+        paint: {
+          'line-color': '#0f172a',
+          'line-width': ['interpolate', ['linear'], ['zoom'], 8, 5.5, 11, 7, 16, 11],
+          'line-opacity': 0.85
+        }
+      });
 
-    // 2. Glowing Cyan Aura
-    map.addLayer({
-      id: trackGlowId,
-      type: 'line',
-      source: trackSourceId,
-      paint: {
-        'line-color': '#38bdf8',
-        'line-width': ['interpolate', ['linear'], ['zoom'], 8, 4, 12, 8, 16, 12],
-        'line-opacity': 0.6,
-        'line-blur': 2
-      }
-    });
+      // 3. Glowing Neon Cyan Aura
+      map.addLayer({
+        id: trackGlowId,
+        type: 'line',
+        source: trackSourceId,
+        paint: {
+          'line-color': '#00d4ff',
+          'line-width': ['interpolate', ['linear'], ['zoom'], 8, 3.5, 11, 5, 16, 8],
+          'line-opacity': 0.95
+        }
+      });
 
-    // 3. Primary Vessel / Towfish Dashed Trackline
-    map.addLayer({
-      id: trackLayerId,
-      type: 'line',
-      source: trackSourceId,
-      paint: {
-        'line-color': '#1d4ed8',
-        'line-width': ['interpolate', ['linear'], ['zoom'], 8, 2.5, 12, 3.5, 16, 5],
-        'line-opacity': 0.95,
-        'line-dasharray': [3, 2]
-      }
-    });
+      // 4. Primary Vessel / Towfish Dashed Trackline
+      map.addLayer({
+        id: trackLayerId,
+        type: 'line',
+        source: trackSourceId,
+        paint: {
+          'line-color': '#2563eb',
+          'line-width': ['interpolate', ['linear'], ['zoom'], 8, 2.5, 11, 3.5, 16, 5],
+          'line-opacity': 1.0,
+          'line-dasharray': [3, 2]
+        }
+      });
 
-    // 4. Razor Sharp White Core Line
-    map.addLayer({
-      id: trackCoreId,
-      type: 'line',
-      source: trackSourceId,
-      paint: {
-        'line-color': '#ffffff',
-        'line-width': 1.5,
-        'line-opacity': 0.9
-      }
-    });
+      // 5. Razor Sharp White Core Line
+      map.addLayer({
+        id: trackCoreId,
+        type: 'line',
+        source: trackSourceId,
+        paint: {
+          'line-color': '#ffffff',
+          'line-width': ['interpolate', ['linear'], ['zoom'], 8, 1.2, 11, 1.8, 16, 2.2],
+          'line-opacity': 1.0
+        }
+      });
+    } catch (err) {
+      console.warn('Trackline rendering note:', err);
+    }
   };
 
   // Initialize MapLibre
@@ -541,7 +518,7 @@ export const MapView: React.FC<MapViewProps> = ({
         center: selectedContact && selectedContact.longitude != null && selectedContact.latitude != null
           ? [selectedContact.longitude, selectedContact.latitude]
           : defaultCenter,
-        zoom: selectedContact ? 16 : 11.5,
+        zoom: selectedContact ? 16 : 10.8,
         minZoom: 1,
         maxZoom: 22,
         attributionControl: false
@@ -805,7 +782,7 @@ export const MapView: React.FC<MapViewProps> = ({
     // Listen to zoom events for instant reactive scaling
     map.on('zoom', updateMarkerSizes);
 
-    // Initial framing (only once on load)
+    // Initial framing (only once on load - frames coastal land on left and ocean survey on right)
     if (!hasInitializedCamera.current && validContacts.length > 0) {
       if (selectedContact && selectedContact.longitude != null && selectedContact.latitude != null) {
         map.flyTo({
@@ -816,14 +793,16 @@ export const MapView: React.FC<MapViewProps> = ({
         });
       } else {
         const bounds = new maplibregl.LngLatBounds();
-        bounds.extend([80.3200, 13.0400]); // Coastal marine waterline margin
+        // Include coastal land margin (80.2750° E, 13.0300° N) so a little bit of land is clearly visible on the west side
+        bounds.extend([80.2750, 13.0300]);
+        bounds.extend([80.4550, 13.1100]);
         validContacts.forEach(c => bounds.extend([c.longitude!, c.latitude!]));
         if (effectiveNavTrack) {
           effectiveNavTrack.forEach(p => {
             if (p.longitude != null && p.latitude != null) bounds.extend([p.longitude, p.latitude]);
           });
         }
-        map.fitBounds(bounds, { padding: 45, maxZoom: 11.8, duration: 600 });
+        map.fitBounds(bounds, { padding: 40, maxZoom: 11.2, duration: 600 });
       }
       hasInitializedCamera.current = true;
     }
@@ -857,7 +836,8 @@ export const MapView: React.FC<MapViewProps> = ({
       });
     } else {
       const bounds = new maplibregl.LngLatBounds();
-      bounds.extend([80.3200, 13.0400]); // Coastal marine waterline margin
+      bounds.extend([80.2750, 13.0300]); // Include coastal land margin
+      bounds.extend([80.4550, 13.1100]);
       const validContacts = effectiveContacts.filter(c => c.latitude != null && c.longitude != null);
       validContacts.forEach(c => bounds.extend([c.longitude!, c.latitude!]));
       if (effectiveNavTrack) {
@@ -865,7 +845,7 @@ export const MapView: React.FC<MapViewProps> = ({
           if (p.longitude != null && p.latitude != null) bounds.extend([p.longitude, p.latitude]);
         });
       }
-      mapInstance.current.fitBounds(bounds, { padding: 45, maxZoom: 11.8, duration: 800 });
+      mapInstance.current.fitBounds(bounds, { padding: 40, maxZoom: 11.2, duration: 800 });
     }
   };
 
