@@ -369,14 +369,12 @@ export const ContactVerificationPage: React.FC<ContactVerificationPageProps> = (
         </div>
       )}
 
-      {/* 2. Main Two-Column Triage Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      {/* 2. Top Analysis Grid (Optical Crop vs Telemetry & Decisions) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         
-        {/* Left Column (5 Cols): Acoustic Target Optical Crop, Physics Characteristics & Audit Trail */}
-        <div className="lg:col-span-5 space-y-6">
-          
-          {/* 1. Optical Crop & Physical Characteristics Card */}
-          <div className="bg-white rounded-[24px] border border-[#e2e8f0] p-6 shadow-soft space-y-4">
+        {/* Left Column (5 Cols): Optical Crop & Physical Characteristics Card */}
+        <div className="lg:col-span-5 flex flex-col">
+          <div className="bg-white rounded-[24px] border border-[#e2e8f0] p-6 shadow-soft space-y-4 flex flex-col justify-between flex-1">
             <div className="flex items-center justify-between border-b border-[#f1f5f9] pb-3">
               <div>
                 <span className="section-label block">Optical Backscatter Crop</span>
@@ -431,47 +429,10 @@ export const ContactVerificationPage: React.FC<ContactVerificationPageProps> = (
               </div>
             </div>
           </div>
-
-          {/* 2. Audit History Log Card (Placed in the remaining space below the image card) */}
-          <div className="bg-white rounded-[24px] border border-[#e2e8f0] p-6 shadow-soft space-y-4">
-            <div className="border-b border-[#f1f5f9] pb-3 flex items-center justify-between">
-              <div>
-                <span className="section-label block">Audit Trail</span>
-                <h3 className="text-base font-bold text-[#0f172a] font-display mt-0.5 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-[#64748b]" />
-                  Verification Review History
-                </h3>
-              </div>
-              <span className="text-xs font-semibold text-[#64748b]">
-                Immutable Hydrographic Log
-              </span>
-            </div>
-
-            <div className="space-y-2.5 text-xs">
-              <div className="p-3.5 rounded-2xl bg-[#f8fafc] border border-[#e2e8f0] flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-900 font-bold text-xs shadow-xs shrink-0">
-                    CV
-                  </div>
-                  <div>
-                    <span className="font-bold text-[#0f172a]">Dr. C. Vance (Lead Hydrographer)</span>
-                    <div className="text-[11px] text-[#64748b]">
-                      Status: <strong className="text-[#0f172a]">{activeContact.review_status.replace('_', ' ')}</strong>
-                      {activeContact.review_note && ` • "${activeContact.review_note}"`}
-                    </div>
-                  </div>
-                </div>
-                <span className="text-[11px] text-[#64748b] font-mono shrink-0">
-                  Recorded UTC
-                </span>
-              </div>
-            </div>
-          </div>
-
         </div>
 
-        {/* Right Column (7 Cols): Candidate Telemetry & Triage Buttons */}
-        <div className="lg:col-span-7 space-y-6">
+        {/* Right Column (7 Cols): Candidate Telemetry & Triage Decisions */}
+        <div className="lg:col-span-7 space-y-6 flex flex-col justify-between">
           
           {/* Candidate Telemetry Grid */}
           <div className="bg-white rounded-[24px] border border-[#e2e8f0] p-6 shadow-soft space-y-4">
@@ -525,7 +486,7 @@ export const ContactVerificationPage: React.FC<ContactVerificationPageProps> = (
           </div>
 
           {/* One-Click Operator Triage Actions Card */}
-          <div className="bg-white rounded-[24px] border border-[#e2e8f0] p-6 shadow-soft space-y-5">
+          <div className="bg-white rounded-[24px] border border-[#e2e8f0] p-6 shadow-soft space-y-5 flex-1 flex flex-col justify-between">
             <div className="border-b border-[#f1f5f9] pb-3 flex items-center justify-between">
               <div>
                 <span className="section-label block">Classification Action</span>
@@ -662,80 +623,117 @@ export const ContactVerificationPage: React.FC<ContactVerificationPageProps> = (
               </div>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* 3. Swath Triage Status & Risk Distribution Summary Card */}
-          <div className="bg-white rounded-[24px] border border-[#e2e8f0] p-6 shadow-soft space-y-4">
-            <div className="border-b border-[#f1f5f9] pb-3 flex items-center justify-between">
-              <div>
-                <span className="section-label block">Operator Queue Progress</span>
-                <h3 className="text-base font-bold text-[#0f172a] font-display mt-0.5 flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-[#1d4ed8]" />
-                  Swath Triage Status & Risk Summary
-                </h3>
+      {/* 3. Bottom Row: Audit Trail & Swath Triage Status (Strictly Aligned Grid Row) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        
+        {/* Left Bottom Card (5 Cols): Verification Review History */}
+        <div className="lg:col-span-5 bg-white rounded-[24px] border border-[#e2e8f0] p-6 shadow-soft flex flex-col justify-between space-y-4">
+          <div className="border-b border-[#f1f5f9] pb-3 flex items-center justify-between">
+            <div>
+              <span className="section-label block">Audit Trail</span>
+              <h3 className="text-base font-bold text-[#0f172a] font-display mt-0.5 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-[#64748b]" />
+                Verification Review History
+              </h3>
+            </div>
+            <span className="text-xs font-semibold text-[#64748b]">
+              Immutable Hydrographic Log
+            </span>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-[#f8fafc] border border-[#e2e8f0] flex items-center justify-between flex-1">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-900 font-bold text-xs shadow-xs shrink-0">
+                CV
               </div>
-              <span className="text-xs font-mono font-bold px-3 py-1 rounded-full bg-slate-100 text-[#0f172a]">
-                {contacts.length} Total Targets
-              </span>
+              <div>
+                <span className="font-bold text-[#0f172a] text-xs">Dr. C. Vance (Lead Hydrographer)</span>
+                <div className="text-[11px] text-[#64748b] mt-0.5">
+                  Status: <strong className="text-[#0f172a]">{activeContact.review_status.replace('_', ' ')}</strong>
+                  {activeContact.review_note && ` • "${activeContact.review_note}"`}
+                </div>
+              </div>
+            </div>
+            <span className="text-[11px] text-[#64748b] font-mono shrink-0">
+              Recorded UTC
+            </span>
+          </div>
+        </div>
+
+        {/* Right Bottom Card (7 Cols): Swath Triage Status & Risk Summary */}
+        <div className="lg:col-span-7 bg-white rounded-[24px] border border-[#e2e8f0] p-6 shadow-soft flex flex-col justify-between space-y-4">
+          <div className="border-b border-[#f1f5f9] pb-3 flex items-center justify-between">
+            <div>
+              <span className="section-label block">Operator Queue Progress</span>
+              <h3 className="text-base font-bold text-[#0f172a] font-display mt-0.5 flex items-center gap-2">
+                <Layers className="w-4 h-4 text-[#1d4ed8]" />
+                Swath Triage Status & Risk Summary
+              </h3>
+            </div>
+            <span className="text-xs font-mono font-bold px-3 py-1 rounded-full bg-slate-100 text-[#0f172a]">
+              {contacts.length} Total Targets
+            </span>
+          </div>
+
+          {/* 3 Status Breakdown Metric Tiles */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 flex-1 items-center">
+            {/* Confirmed Contacts */}
+            <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between h-full">
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">
+                  Confirmed
+                </span>
+                <div className="text-2xl font-extrabold text-emerald-700 font-display">
+                  {contacts.filter(c => c.review_status === 'CONFIRMED').length}
+                </div>
+                <span className="text-[11px] text-emerald-600 font-medium block">
+                  Validated Debris
+                </span>
+              </div>
+              <div className="w-9 h-9 rounded-xl bg-white text-emerald-600 flex items-center justify-center shadow-xs border border-emerald-100 shrink-0">
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
             </div>
 
-            {/* 3 Status Breakdown Metric Tiles */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-              {/* Confirmed Contacts */}
-              <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">
-                    Confirmed
-                  </span>
-                  <div className="text-2xl font-extrabold text-emerald-700 font-display">
-                    {contacts.filter(c => c.review_status === 'CONFIRMED').length}
-                  </div>
-                  <span className="text-[11px] text-emerald-600 font-medium block">
-                    Validated Debris
-                  </span>
+            {/* In Review / Pending */}
+            <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/80 flex items-center justify-between h-full">
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider block">
+                  In Review
+                </span>
+                <div className="text-2xl font-extrabold text-amber-700 font-display">
+                  {contacts.filter(c => c.review_status === 'AI_CANDIDATE' || c.review_status === 'UNCERTAIN').length}
                 </div>
-                <div className="w-9 h-9 rounded-xl bg-white text-emerald-600 flex items-center justify-center shadow-xs border border-emerald-100 shrink-0">
-                  <CheckCircle2 className="w-4 h-4" />
-                </div>
+                <span className="text-[11px] text-amber-600 font-medium block">
+                  Pending Operator
+                </span>
               </div>
-
-              {/* In Review / Pending */}
-              <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/80 flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider block">
-                    In Review
-                  </span>
-                  <div className="text-2xl font-extrabold text-amber-700 font-display">
-                    {contacts.filter(c => c.review_status === 'AI_CANDIDATE' || c.review_status === 'UNCERTAIN').length}
-                  </div>
-                  <span className="text-[11px] text-amber-600 font-medium block">
-                    Pending Operator
-                  </span>
-                </div>
-                <div className="w-9 h-9 rounded-xl bg-white text-amber-600 flex items-center justify-center shadow-xs border border-amber-100 shrink-0">
-                  <HelpCircle className="w-4 h-4" />
-                </div>
+              <div className="w-9 h-9 rounded-xl bg-white text-amber-600 flex items-center justify-center shadow-xs border border-amber-100 shrink-0">
+                <HelpCircle className="w-4 h-4" />
               </div>
+            </div>
 
-              {/* Low Risk / Benign Clutter */}
-              <div className="p-3.5 rounded-2xl bg-sky-50/70 border border-sky-200/80 flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <span className="text-[10px] font-bold text-sky-800 uppercase tracking-wider block">
-                    Low Risk / Clutter
-                  </span>
-                  <div className="text-2xl font-extrabold text-sky-700 font-display">
-                    {contacts.filter(c => c.priority === 'LOW' || c.review_status === 'FALSE_POSITIVE').length}
-                  </div>
-                  <span className="text-[11px] text-sky-600 font-medium block">
-                    Benign Seabed
-                  </span>
+            {/* Low Risk / Benign Clutter */}
+            <div className="p-3.5 rounded-2xl bg-sky-50/70 border border-sky-200/80 flex items-center justify-between h-full">
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-bold text-sky-800 uppercase tracking-wider block">
+                  Low Risk / Clutter
+                </span>
+                <div className="text-2xl font-extrabold text-sky-700 font-display">
+                  {contacts.filter(c => c.priority === 'LOW' || c.review_status === 'FALSE_POSITIVE').length}
                 </div>
-                <div className="w-9 h-9 rounded-xl bg-white text-sky-600 flex items-center justify-center shadow-xs border border-sky-100 shrink-0">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
+                <span className="text-[11px] text-sky-600 font-medium block">
+                  Benign Seabed
+                </span>
+              </div>
+              <div className="w-9 h-9 rounded-xl bg-white text-sky-600 flex items-center justify-center shadow-xs border border-sky-100 shrink-0">
+                <ShieldCheck className="w-4 h-4" />
               </div>
             </div>
           </div>
-
         </div>
 
       </div>
