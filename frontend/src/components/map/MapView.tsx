@@ -27,6 +27,7 @@ interface MapViewProps {
 }
 
 // Curated active ocean candidates with distinct risk levels (Red = High Risk, Orange = Medium Risk, Green = Low Risk)
+// Curated active ocean candidates safely situated in deep offshore Indian waters (> 15 km offshore)
 export const DEFAULT_OCEAN_CANDIDATES: Contact[] = [
   {
     contact_id: 'C001',
@@ -37,8 +38,8 @@ export const DEFAULT_OCEAN_CANDIDATES: Contact[] = [
     priority: 'HIGH',
     review_status: 'AI_CANDIDATE',
     localization_status: 'ESTIMATED',
-    latitude: 13.086396,
-    longitude: 80.383111,
+    latitude: 13.088000,
+    longitude: 80.441000,
     shadow_evidence: 0.88,
     context_score: 0.91,
     data_quality: 0.95,
@@ -54,8 +55,8 @@ export const DEFAULT_OCEAN_CANDIDATES: Contact[] = [
     priority: 'HIGH',
     review_status: 'AI_CANDIDATE',
     localization_status: 'ESTIMATED',
-    latitude: 13.078500,
-    longitude: 80.376200,
+    latitude: 13.079000,
+    longitude: 80.433000,
     shadow_evidence: 0.82,
     context_score: 0.87,
     data_quality: 0.92,
@@ -71,8 +72,8 @@ export const DEFAULT_OCEAN_CANDIDATES: Contact[] = [
     priority: 'MEDIUM',
     review_status: 'AI_CANDIDATE',
     localization_status: 'ESTIMATED',
-    latitude: 13.071200,
-    longitude: 80.369800,
+    latitude: 13.070000,
+    longitude: 80.425000,
     shadow_evidence: 0.64,
     context_score: 0.75,
     data_quality: 0.88,
@@ -88,8 +89,8 @@ export const DEFAULT_OCEAN_CANDIDATES: Contact[] = [
     priority: 'MEDIUM',
     review_status: 'AI_CANDIDATE',
     localization_status: 'ESTIMATED',
-    latitude: 13.064500,
-    longitude: 80.363700,
+    latitude: 13.061000,
+    longitude: 80.418000,
     shadow_evidence: 0.69,
     context_score: 0.72,
     data_quality: 0.90,
@@ -105,8 +106,8 @@ export const DEFAULT_OCEAN_CANDIDATES: Contact[] = [
     priority: 'HIGH',
     review_status: 'AI_CANDIDATE',
     localization_status: 'ESTIMATED',
-    latitude: 13.095200,
-    longitude: 80.394100,
+    latitude: 13.097000,
+    longitude: 80.449000,
     shadow_evidence: 0.91,
     context_score: 0.93,
     data_quality: 0.97,
@@ -122,8 +123,8 @@ export const DEFAULT_OCEAN_CANDIDATES: Contact[] = [
     priority: 'LOW',
     review_status: 'CONFIRMED',
     localization_status: 'ESTIMATED',
-    latitude: 13.048900,
-    longitude: 80.349600,
+    latitude: 13.048000,
+    longitude: 80.406000,
     shadow_evidence: 0.38,
     context_score: 0.45,
     data_quality: 0.96,
@@ -139,8 +140,8 @@ export const DEFAULT_OCEAN_CANDIDATES: Contact[] = [
     priority: 'MEDIUM',
     review_status: 'AI_CANDIDATE',
     localization_status: 'ESTIMATED',
-    latitude: 13.057800,
-    longitude: 80.357200,
+    latitude: 13.055000,
+    longitude: 80.412000,
     shadow_evidence: 0.61,
     context_score: 0.68,
     data_quality: 0.89,
@@ -150,13 +151,13 @@ export const DEFAULT_OCEAN_CANDIDATES: Contact[] = [
 ];
 
 export const DEFAULT_NAV_TRACK: NavWaypoint[] = [
-  { ping_id: 1, latitude: 13.038900, longitude: 80.351200, heading: 42.0 },
-  { ping_id: 25, latitude: 13.054200, longitude: 80.362800, heading: 42.0 },
-  { ping_id: 50, latitude: 13.072100, longitude: 80.371400, heading: 42.0 },
-  { ping_id: 75, latitude: 13.086396, longitude: 80.383111, heading: 42.0 },
-  { ping_id: 100, latitude: 13.098450, longitude: 80.395200, heading: 42.0 },
-  { ping_id: 125, latitude: 13.115600, longitude: 80.412000, heading: 42.0 },
-  { ping_id: 150, latitude: 13.128000, longitude: 80.425000, heading: 42.0 }
+  { ping_id: 1, latitude: 13.040000, longitude: 80.400000, heading: 42.0 },
+  { ping_id: 25, latitude: 13.054000, longitude: 80.412000, heading: 42.0 },
+  { ping_id: 50, latitude: 13.072000, longitude: 80.426000, heading: 42.0 },
+  { ping_id: 75, latitude: 13.088000, longitude: 80.441000, heading: 42.0 },
+  { ping_id: 100, latitude: 13.098000, longitude: 80.450000, heading: 42.0 },
+  { ping_id: 125, latitude: 13.115000, longitude: 80.465000, heading: 42.0 },
+  { ping_id: 150, latitude: 13.128000, longitude: 80.476000, heading: 42.0 }
 ];
 
 // Helper to determine dot color and floating card style based on actual Risk Level & Review Status
@@ -366,36 +367,93 @@ export const MapView: React.FC<MapViewProps> = ({
   }, [selectedContact]);
 
   // Determine effective candidates (use provided list if available, or fallback to default ocean benchmark)
-  const sourceContacts = (contacts && contacts.length > 0) ? contacts : DEFAULT_OCEAN_CANDIDATES;
-  const effectiveContacts = sourceContacts.map((c, idx) => {
-    if (c.latitude != null && c.longitude != null) {
-      return c;
+  // Memoize effective ocean candidates (situated safely in deep offshore Indian waters > 14 km offshore)
+  const effectiveContacts = React.useMemo(() => {
+    const sourceContacts = (contacts && contacts.length > 0) ? contacts : DEFAULT_OCEAN_CANDIDATES;
+    return sourceContacts.map((c, idx) => {
+      if (c.latitude != null && c.longitude != null) {
+        return c;
+      }
+      // Interpolate distinct coordinates along the deep ocean survey corridor
+      const fallbackBase = DEFAULT_OCEAN_CANDIDATES[idx % DEFAULT_OCEAN_CANDIDATES.length];
+      return {
+        ...c,
+        latitude: fallbackBase?.latitude ?? (13.0480 + (idx % 7) * 0.008),
+        longitude: fallbackBase?.longitude ?? (80.4150 + (idx % 7) * 0.0065),
+        localization_status: c.localization_status || 'ESTIMATED'
+      };
+    });
+  }, [contacts]);
+
+  // Construct a continuous, high-fidelity surveyor trackline
+  const effectiveNavTrack: NavWaypoint[] = React.useMemo(() => {
+    if (navTrack && navTrack.length > 1) {
+      return navTrack;
     }
-    // Interpolate distinct coordinates along the survey corridor
-    const fallbackBase = DEFAULT_OCEAN_CANDIDATES[idx % DEFAULT_OCEAN_CANDIDATES.length];
-    return {
-      ...c,
-      latitude: fallbackBase?.latitude ?? (13.0480 + (idx % 7) * 0.008),
-      longitude: fallbackBase?.longitude ?? (80.3490 + (idx % 7) * 0.0075),
-      localization_status: c.localization_status || 'ESTIMATED'
-    };
-  });
-  const effectiveNavTrack = (navTrack && navTrack.length > 0) ? navTrack : DEFAULT_NAV_TRACK;
+    // If navTrack is empty or has only 1 point, build a continuous survey line from effectiveContacts
+    const validCoords = effectiveContacts
+      .filter(c => c.latitude != null && c.longitude != null)
+      .map(c => ({ lat: c.latitude!, lng: c.longitude! }));
+
+    if (validCoords.length >= 2) {
+      const sorted = [...validCoords].sort((a, b) => a.lat - b.lat);
+      const minLat = sorted[0].lat;
+      const minLng = sorted[0].lng;
+      const maxLat = sorted[sorted.length - 1].lat;
+      const maxLng = sorted[sorted.length - 1].lng;
+      
+      const dLat = maxLat - minLat;
+      const dLng = maxLng - minLng;
+      
+      // Extend trackline 35% before start and 35% after end for realistic towfish run-in/run-out
+      const startPt: NavWaypoint = {
+        ping_id: 1,
+        latitude: minLat - (dLat !== 0 ? dLat * 0.35 : 0.015),
+        longitude: minLng - (dLng !== 0 ? dLng * 0.35 : 0.012),
+        heading: 42.0
+      };
+      
+      const midPoints: NavWaypoint[] = sorted.map((pt, i) => ({
+        ping_id: 10 + i * 20,
+        latitude: pt.lat,
+        longitude: pt.lng,
+        heading: 42.0
+      }));
+
+      const endPt: NavWaypoint = {
+        ping_id: 100 + sorted.length * 20,
+        latitude: maxLat + (dLat !== 0 ? dLat * 0.35 : 0.015),
+        longitude: maxLng + (dLng !== 0 ? dLng * 0.35 : 0.012),
+        heading: 42.0
+      };
+
+      return [startPt, ...midPoints, endPt];
+    }
+
+    return DEFAULT_NAV_TRACK;
+  }, [navTrack, effectiveContacts]);
 
   // Counts by actual risk theme
   const highCount = effectiveContacts.filter(c => getRiskTheme(c).type === 'high').length;
   const medCount = effectiveContacts.filter(c => getRiskTheme(c).type === 'medium').length;
   const lowCount = effectiveContacts.filter(c => getRiskTheme(c).type === 'low').length;
 
-  // Default coordinate center (offshore Bay of Bengal with coastal land visible: 80.3200° E, 13.0720° N)
-  const defaultCenter: [number, number] = [80.3200, 13.0720];
+  // Default coordinate center (offshore Bay of Bengal: 80.4200° E, 13.0720° N)
+  const defaultCenter: [number, number] = [80.4200, 13.0720];
 
-  // Helper to render subtle Towfish Trajectory Line (without the cluttering blue circle ping points)
+  // Render high-visibility surveyor trackline, glowing corridor & swath boundary
   const renderTrackline = (map: maplibregl.Map) => {
     const trackSourceId = 'towfish-track-source';
+    const trackGlowId = 'towfish-track-glow';
     const trackLayerId = 'towfish-track-line';
+    const trackCoreId = 'towfish-track-core';
+    const swathBandId = 'towfish-swath-band';
 
+    // Remove existing layers & sources safely
+    if (map.getLayer(trackCoreId)) map.removeLayer(trackCoreId);
     if (map.getLayer(trackLayerId)) map.removeLayer(trackLayerId);
+    if (map.getLayer(trackGlowId)) map.removeLayer(trackGlowId);
+    if (map.getLayer(swathBandId)) map.removeLayer(swathBandId);
     if (map.getSource(trackSourceId)) map.removeSource(trackSourceId);
 
     if (!showTrackline || !effectiveNavTrack || effectiveNavTrack.length === 0) return;
@@ -418,16 +476,53 @@ export const MapView: React.FC<MapViewProps> = ({
       }
     });
 
-    // Faint subtle navigation path line
+    // 1. Swath Acoustic Footprint Band (50m Port/Starboard Coverage)
+    map.addLayer({
+      id: swathBandId,
+      type: 'line',
+      source: trackSourceId,
+      paint: {
+        'line-color': '#0284c7',
+        'line-width': ['interpolate', ['linear'], ['zoom'], 8, 12, 12, 28, 16, 60],
+        'line-opacity': 0.14
+      }
+    });
+
+    // 2. Glowing Cyan Aura
+    map.addLayer({
+      id: trackGlowId,
+      type: 'line',
+      source: trackSourceId,
+      paint: {
+        'line-color': '#38bdf8',
+        'line-width': ['interpolate', ['linear'], ['zoom'], 8, 4, 12, 8, 16, 12],
+        'line-opacity': 0.6,
+        'line-blur': 2
+      }
+    });
+
+    // 3. Primary Vessel / Towfish Dashed Trackline
     map.addLayer({
       id: trackLayerId,
       type: 'line',
       source: trackSourceId,
       paint: {
         'line-color': '#1d4ed8',
-        'line-width': 2.5,
-        'line-opacity': 0.75,
+        'line-width': ['interpolate', ['linear'], ['zoom'], 8, 2.5, 12, 3.5, 16, 5],
+        'line-opacity': 0.95,
         'line-dasharray': [3, 2]
+      }
+    });
+
+    // 4. Razor Sharp White Core Line
+    map.addLayer({
+      id: trackCoreId,
+      type: 'line',
+      source: trackSourceId,
+      paint: {
+        'line-color': '#ffffff',
+        'line-width': 1.5,
+        'line-opacity': 0.9
       }
     });
   };
@@ -458,6 +553,7 @@ export const MapView: React.FC<MapViewProps> = ({
       map.on('load', () => {
         mapInstance.current = map;
         setMapReady(true);
+        renderTrackline(map);
         map.resize();
       });
 
@@ -493,13 +589,16 @@ export const MapView: React.FC<MapViewProps> = ({
     });
   };
 
-  // Redraw trackline when settings change
+  // Redraw trackline when settings or track changes
   useEffect(() => {
     if (!mapInstance.current || !mapReady) return;
     renderTrackline(mapInstance.current);
   }, [effectiveNavTrack, mapReady, showTrackline, activeBasemap]);
 
-  // Render ONLY the Candidate Dots with their correct Risk Colors (Green, Orange, Red)
+  // Track whether initial framing has occurred
+  const hasInitializedCamera = useRef<boolean>(false);
+
+  // Render Candidate Dots with High-Performance Dynamic Zoom Scaling (Zero Land Overlap)
   useEffect(() => {
     if (!mapInstance.current || !mapReady) return;
     const map = mapInstance.current;
@@ -512,78 +611,104 @@ export const MapView: React.FC<MapViewProps> = ({
       c => c.latitude != null && c.longitude != null
     );
 
+    // Track structured sub-elements for fast CSS-only zoom resizing (no DOM destroying)
+    const markerElements: {
+      el: HTMLElement;
+      halo: HTMLElement;
+      dot: HTMLElement;
+      label: HTMLElement;
+      tag: HTMLElement;
+      contact: Contact;
+      isSelected: boolean;
+      riskTheme: ReturnType<typeof getRiskTheme>;
+    }[] = [];
+
     validContacts.forEach(contact => {
       const isSelected = selectedContact?.contact_id === contact.contact_id;
       const riskPercent = Math.round((contact.confidence || 0.80) * 100);
       const riskTheme = getRiskTheme(contact);
 
       const el = document.createElement('div');
-      el.style.width = '42px';
-      el.style.height = '42px';
+      el.className = 'candidate-map-marker';
       el.style.cursor = 'pointer';
       el.style.position = 'relative';
       el.style.display = 'flex';
       el.style.alignItems = 'center';
       el.style.justifyContent = 'center';
-      el.style.zIndex = isSelected ? '30' : '15';
+      el.style.zIndex = isSelected ? '40' : '20';
+      el.setAttribute('title', `${contact.contact_id}: ${contact.class_name.replace(/_/g, ' ')} (${riskPercent}% Risk)`);
 
-      el.innerHTML = `
-        <div style="position: relative; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;">
-          <!-- Pulsing Beacon Halo -->
-          <div style="
-            position: absolute;
-            width: ${isSelected ? '46px' : '36px'};
-            height: ${isSelected ? '46px' : '36px'};
-            border-radius: 50%;
-            background-color: ${riskTheme.ringColor};
-            animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-          "></div>
-          
-          <!-- Candidate Target Dot: Green (Low), Orange (Medium), Red (High) -->
-          <div style="
-            position: relative;
-            background-color: ${riskTheme.bg};
-            width: ${isSelected ? '32px' : '26px'};
-            height: ${isSelected ? '32px' : '26px'};
-            border-radius: 50%;
-            border: 2.5px solid #ffffff;
-            box-shadow: ${riskTheme.glow};
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: ${isSelected ? '11px' : '9.5px'};
-            font-weight: 800;
-            color: #ffffff;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            transform: ${isSelected ? 'scale(1.15)' : 'scale(1)'};
-          ">
-            ${contact.contact_id}
-          </div>
+      // 1. Pulsing Halo Ring
+      const halo = document.createElement('div');
+      halo.className = 'marker-halo';
+      halo.style.position = 'absolute';
+      halo.style.borderRadius = '50%';
+      halo.style.backgroundColor = riskTheme.ringColor;
+      halo.style.pointerEvents = 'none';
+      halo.style.transition = 'width 0.15s ease-out, height 0.15s ease-out';
+      if (isSelected) {
+        halo.style.animation = 'ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite';
+      }
 
-          <!-- Bottom Risk Tag -->
-          <div style="
-            position: absolute;
-            top: 32px;
-            white-space: nowrap;
-            background: rgba(15, 23, 42, 0.9);
-            backdrop-filter: blur(4px);
-            color: #ffffff;
-            font-family: 'Inter', sans-serif;
-            font-size: 9.5px;
-            font-weight: 700;
-            padding: 1.5px 6px;
-            border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            pointer-events: none;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-          ">
-            ${riskPercent}% Risk
-          </div>
-        </div>
-      `;
+      // 2. Main Colored Dot Pip
+      const dot = document.createElement('div');
+      dot.className = 'marker-dot';
+      dot.style.position = 'relative';
+      dot.style.borderRadius = '50%';
+      dot.style.backgroundColor = riskTheme.bg;
+      dot.style.border = '2px solid #ffffff';
+      dot.style.boxShadow = riskTheme.glow;
+      dot.style.display = 'flex';
+      dot.style.alignItems = 'center';
+      dot.style.justifyContent = 'center';
+      dot.style.fontFamily = "'JetBrains Mono', monospace";
+      dot.style.fontWeight = '800';
+      dot.style.color = '#ffffff';
+      dot.style.transition = 'width 0.15s ease-out, height 0.15s ease-out, font-size 0.15s ease-out';
 
-      // Candidate Selection on Click / Touch
+      // 3. Target Label Inside Dot (visible at mid & detailed zooms)
+      const label = document.createElement('span');
+      label.className = 'marker-label';
+      label.style.pointerEvents = 'none';
+      label.textContent = contact.contact_id;
+      dot.appendChild(label);
+
+      // 4. Floating Risk Pill Below Dot (visible only at detailed close zooms)
+      const tag = document.createElement('div');
+      tag.className = 'marker-tag';
+      tag.style.position = 'absolute';
+      tag.style.top = '100%';
+      tag.style.marginTop = '4px';
+      tag.style.whiteSpace = 'nowrap';
+      tag.style.background = 'rgba(15, 23, 42, 0.9)';
+      tag.style.backdropFilter = 'blur(4px)';
+      tag.style.color = '#ffffff';
+      tag.style.fontFamily = "'Inter', sans-serif";
+      tag.style.fontSize = '9.5px';
+      tag.style.fontWeight = '700';
+      tag.style.padding = '1.5px 6px';
+      tag.style.borderRadius = '6px';
+      tag.style.border = '1px solid rgba(255, 255, 255, 0.25)';
+      tag.style.pointerEvents = 'none';
+      tag.style.boxShadow = '0 4px 10px rgba(0,0,0,0.4)';
+      tag.textContent = `${riskPercent}% Risk`;
+
+      el.appendChild(halo);
+      el.appendChild(dot);
+      el.appendChild(tag);
+
+      markerElements.push({
+        el,
+        halo,
+        dot,
+        label,
+        tag,
+        contact,
+        isSelected,
+        riskTheme
+      });
+
+      // Selection on Click / Touch
       const handleCandidateClick = (e: Event) => {
         e.stopPropagation();
         onSelectContact(contact);
@@ -601,35 +726,112 @@ export const MapView: React.FC<MapViewProps> = ({
       el.addEventListener('click', handleCandidateClick);
       el.addEventListener('touchend', handleCandidateClick);
 
-      const marker = new maplibregl.Marker({ element: el })
+      const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
         .setLngLat([contact.longitude!, contact.latitude!])
         .addTo(map);
 
       markersRef.current[contact.contact_id] = marker;
     });
 
-    // If a contact is selected, fly directly to it at high zoom (16).
-    // Otherwise, frame the overview with coastal land visible on the west and survey corridor on the east.
-    if (selectedContact && selectedContact.longitude != null && selectedContact.latitude != null) {
-      map.flyTo({
-        center: [selectedContact.longitude, selectedContact.latitude],
-        zoom: 16,
-        essential: true,
-        duration: 600
+    // High-Performance Dynamic Sizing based on Zoom Level
+    const updateMarkerSizes = () => {
+      if (!mapInstance.current) return;
+      const zoom = mapInstance.current.getZoom();
+
+      markerElements.forEach(({ el, halo, dot, label, tag, contact, isSelected }) => {
+        if (zoom < 9.0) {
+          // Tier 1: Macro State/Peninsula view (zoom < 9.0) - Micro jewel pip (5px-8px). NO text, NO risk badge -> Zero land overlap
+          const dotSize = isSelected ? 8 : 5;
+          el.style.width = `${dotSize}px`;
+          el.style.height = `${dotSize}px`;
+          dot.style.width = `${dotSize}px`;
+          dot.style.height = `${dotSize}px`;
+          dot.style.borderWidth = '1px';
+          halo.style.display = isSelected ? 'block' : 'none';
+          halo.style.width = '12px';
+          halo.style.height = '12px';
+          label.style.display = 'none';
+          tag.style.display = 'none';
+        } else if (zoom < 11.5) {
+          // Tier 2: Regional / Coastal Overview (9.0 <= zoom < 11.5) - Compact pip (8px-12px), subtle halo, NO text -> Zero land overlap
+          const dotSize = isSelected ? 12 : 8;
+          el.style.width = `${dotSize}px`;
+          el.style.height = `${dotSize}px`;
+          dot.style.width = `${dotSize}px`;
+          dot.style.height = `${dotSize}px`;
+          dot.style.borderWidth = '1.5px';
+          halo.style.display = 'block';
+          halo.style.width = `${dotSize + 6}px`;
+          halo.style.height = `${dotSize + 6}px`;
+          label.style.display = 'none';
+          tag.style.display = 'none';
+        } else if (zoom < 13.5) {
+          // Tier 3: Corridor Mid-Zoom (11.5 <= zoom < 13.5) - 16px-20px dot with short ID inside (e.g. C1), NO external tags
+          const dotSize = isSelected ? 22 : 16;
+          el.style.width = `${dotSize}px`;
+          el.style.height = `${dotSize}px`;
+          dot.style.width = `${dotSize}px`;
+          dot.style.height = `${dotSize}px`;
+          dot.style.borderWidth = '2px';
+          halo.style.display = 'block';
+          halo.style.width = `${dotSize + 8}px`;
+          halo.style.height = `${dotSize + 8}px`;
+          label.style.display = 'inline-block';
+          label.textContent = contact.contact_id.replace(/^C0*/, 'C');
+          label.style.fontSize = isSelected ? '9px' : '7.5px';
+          tag.style.display = 'none';
+        } else {
+          // Tier 4: Close Target Inspection (zoom >= 13.5) - Full 26px-32px dot with full target ID and floating risk badge
+          const dotSize = isSelected ? 32 : 26;
+          el.style.width = `${dotSize}px`;
+          el.style.height = `${dotSize}px`;
+          dot.style.width = `${dotSize}px`;
+          dot.style.height = `${dotSize}px`;
+          dot.style.borderWidth = '2.5px';
+          halo.style.display = 'block';
+          halo.style.width = `${dotSize + 12}px`;
+          halo.style.height = `${dotSize + 12}px`;
+          label.style.display = 'inline-block';
+          label.textContent = contact.contact_id;
+          label.style.fontSize = isSelected ? '11px' : '9.5px';
+          tag.style.display = 'block';
+        }
       });
-    } else if (validContacts.length > 0) {
-      const bounds = new maplibregl.LngLatBounds();
-      // Include coastal land (Chennai port / shoreline) so map is not ocean-only
-      bounds.extend([80.2400, 13.0300]);
-      validContacts.forEach(c => bounds.extend([c.longitude!, c.latitude!]));
-      if (effectiveNavTrack) {
-        effectiveNavTrack.forEach(p => {
-          if (p.longitude != null && p.latitude != null) bounds.extend([p.longitude, p.latitude]);
+    };
+
+    // Initial size calculation
+    updateMarkerSizes();
+
+    // Listen to zoom events for instant reactive scaling
+    map.on('zoom', updateMarkerSizes);
+
+    // Initial framing (only once on load)
+    if (!hasInitializedCamera.current && validContacts.length > 0) {
+      if (selectedContact && selectedContact.longitude != null && selectedContact.latitude != null) {
+        map.flyTo({
+          center: [selectedContact.longitude, selectedContact.latitude],
+          zoom: 16,
+          essential: true,
+          duration: 600
         });
+      } else {
+        const bounds = new maplibregl.LngLatBounds();
+        bounds.extend([80.3200, 13.0400]); // Coastal marine waterline margin
+        validContacts.forEach(c => bounds.extend([c.longitude!, c.latitude!]));
+        if (effectiveNavTrack) {
+          effectiveNavTrack.forEach(p => {
+            if (p.longitude != null && p.latitude != null) bounds.extend([p.longitude, p.latitude]);
+          });
+        }
+        map.fitBounds(bounds, { padding: 45, maxZoom: 11.8, duration: 600 });
       }
-      map.fitBounds(bounds, { padding: 45, maxZoom: 11.5, duration: 800 });
+      hasInitializedCamera.current = true;
     }
-  }, [effectiveContacts, selectedContact, mapReady, onSelectContact]);
+
+    return () => {
+      map.off('zoom', updateMarkerSizes);
+    };
+  }, [effectiveContacts, selectedContact, mapReady, onSelectContact, effectiveNavTrack]);
 
   // Center map when selectedContact changes externally
   useEffect(() => {
@@ -655,10 +857,15 @@ export const MapView: React.FC<MapViewProps> = ({
       });
     } else {
       const bounds = new maplibregl.LngLatBounds();
-      bounds.extend([80.2400, 13.0300]); // Include coastline
+      bounds.extend([80.3200, 13.0400]); // Coastal marine waterline margin
       const validContacts = effectiveContacts.filter(c => c.latitude != null && c.longitude != null);
       validContacts.forEach(c => bounds.extend([c.longitude!, c.latitude!]));
-      mapInstance.current.fitBounds(bounds, { padding: 45, maxZoom: 11.5, duration: 800 });
+      if (effectiveNavTrack) {
+        effectiveNavTrack.forEach(p => {
+          if (p.longitude != null && p.latitude != null) bounds.extend([p.longitude, p.latitude]);
+        });
+      }
+      mapInstance.current.fitBounds(bounds, { padding: 45, maxZoom: 11.8, duration: 800 });
     }
   };
 

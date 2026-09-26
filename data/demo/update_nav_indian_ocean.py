@@ -9,12 +9,12 @@ def generate_indian_ocean_nav_files():
     tracks = [
         {
             "name": "viator_04_nav.csv",
-            "base_lat": 13.08500,  # Bay of Bengal / Indian Waters (Off Chennai Coast)
-            "base_lon": 80.38200,
+            "base_lat": 13.04500,  # Bay of Bengal / Deep Offshore Corridor (15 km East of Chennai)
+            "base_lon": 80.40500,
             "heading": 42.0,
             "pings": 150,
-            "d_lat": 0.000018,
-            "d_lon": 0.000016
+            "d_lat": 0.000320,
+            "d_lon": 0.000280
         },
         {
             "name": "corsican_02_nav.csv",
@@ -22,8 +22,8 @@ def generate_indian_ocean_nav_files():
             "base_lon": 77.65000,
             "heading": 115.0,
             "pings": 150,
-            "d_lat": 0.000012,
-            "d_lon": 0.000022
+            "d_lat": 0.000280,
+            "d_lon": 0.000350
         },
         {
             "name": "artificial_reef_02_nav.csv",
@@ -31,8 +31,8 @@ def generate_indian_ocean_nav_files():
             "base_lon": 79.36500,
             "heading": 65.0,
             "pings": 150,
-            "d_lat": 0.000015,
-            "d_lon": 0.000020
+            "d_lat": 0.000300,
+            "d_lon": 0.000320
         },
         {
             "name": "survey_001_nav.csv",
@@ -40,8 +40,8 @@ def generate_indian_ocean_nav_files():
             "base_lon": 72.72500,
             "heading": 34.5,
             "pings": 150,
-            "d_lat": 0.000020,
-            "d_lon": 0.000014
+            "d_lat": 0.000350,
+            "d_lon": 0.000250
         }
     ]
 
